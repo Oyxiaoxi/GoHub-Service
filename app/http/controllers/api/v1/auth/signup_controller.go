@@ -27,6 +27,7 @@ func (sc *SignupController) IsPhoneExist(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"exist": user.IsPhoneExist(request.Phone),
 	})
+
 }
 
 // IsEmailExist 检测邮箱是否已注册
