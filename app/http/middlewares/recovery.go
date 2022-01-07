@@ -2,9 +2,9 @@ package middlewares
 
 import (
 	"GoHub-Service/pkg/logger"
+	"GoHub-Service/pkg/response"
 
 	"net"
-	"net/http"
 	"net/http/httputil"
 	"os"
 	"strings"
@@ -56,9 +56,7 @@ func Recovery() gin.HandlerFunc {
 				)
 
 				// 返回 500 状态码
-				c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
-					"message": "服务器内部错误，请稍后再试",
-				})
+				response.Abort500(c)
 			}
 		}()
 		c.Next()
