@@ -2,6 +2,7 @@ package main
 
 import (
 	"GoHub-Service/app/cmd"
+	"GoHub-Service/app/cmd/make"
 	"GoHub-Service/bootstrap"
 	btsConig "GoHub-Service/config"
 	"GoHub-Service/pkg/config"
@@ -50,6 +51,7 @@ func main() {
 		cmd.CmdServe,
 		cmd.CmdKey,
 		cmd.CmdPlay,
+		make.CmdMake,
 	)
 
 	// 配置默认运行 Web 服务
