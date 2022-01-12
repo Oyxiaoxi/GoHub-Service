@@ -7,7 +7,7 @@ import (
     "github.com/spf13/cobra"
 )
 
-var Cmd{{StructName}} = &cobra.Command{
+var Cmd{{StructName}} = &cobra.Command {
     Use:   "{{PackageName}}",
     Short:  "HERE PUTS THE COMMAND DESCRIPTION",
     Run: run{{StructName}},

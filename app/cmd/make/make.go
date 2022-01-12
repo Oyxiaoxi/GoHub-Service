@@ -1,10 +1,10 @@
+// Package make 命令行的 make 命令
 package make
 
 import (
 	"GoHub-Service/pkg/console"
 	"GoHub-Service/pkg/file"
 	"GoHub-Service/pkg/str"
-
 	"embed"
 	"fmt"
 	"strings"
@@ -67,10 +67,6 @@ func init() {
 	// 注册 make 的子命令
 	CmdMake.AddCommand(
 		CmdMakeCMD,
-		CmdMakeModel,
-		CmdMakeAPIController,
-		CmdMakeRequest,
-		CmdMakeMigration,
 	)
 }
 
@@ -102,7 +98,10 @@ func createFileFromStub(filePath string, stubName string, model Model, variables
 	}
 
 	// 读取 stub 模板文件
-	modelData, _ := stubsFS.ReadFile("stubs/" + stubName + ".stub")
+	modelData, err := stubsFS.ReadFile("stubs/" + stubName + ".stub")
+	if err != nil {
+		console.Exit(err.Error())
+	}
 	modelStub := string(modelData)
 
 	// 添加默认的替换变量
@@ -119,7 +118,7 @@ func createFileFromStub(filePath string, stubName string, model Model, variables
 	}
 
 	// 存储到目标文件中
-	err := file.Put([]byte(modelStub), filePath)
+	err = file.Put([]byte(modelStub), filePath)
 	if err != nil {
 		console.Exit(err.Error())
 	}
