@@ -1,3 +1,4 @@
+// Package str 字符串辅助方法
 package str
 
 import (

@@ -2,6 +2,7 @@
 package {{PackageName}}
 
 import (
+
     "GoHub-Service/pkg/logger"
     "GoHub-Service/pkg/database"
 )

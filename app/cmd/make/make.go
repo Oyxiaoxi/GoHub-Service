@@ -54,7 +54,7 @@ type Model struct {
 
 // stubsFS 方便我们后面打包这些 .stub 为后缀名的文件
 
-// go:embed stubs
+//go:embed stubs
 var stubsFS embed.FS
 
 // CmdMake 说明 cobra 命令
@@ -67,6 +67,10 @@ func init() {
 	// 注册 make 的子命令
 	CmdMake.AddCommand(
 		CmdMakeCMD,
+		CmdMakeModel,
+		CmdMakeAPIController,
+		CmdMakeRequest,
+		CmdMakeMigration,
 	)
 }
 
