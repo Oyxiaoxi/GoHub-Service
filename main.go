@@ -53,6 +53,7 @@ func main() {
 		cmd.CmdPlay,
 		cmd.CmdMigrate,
 		make.CmdMake,
+		cmd.CmdDBSeed,
 	)
 
 	// 配置默认运行 Web 服务
