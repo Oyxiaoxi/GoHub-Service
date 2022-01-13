@@ -31,4 +31,3 @@ func {{StructName}}Save(data interface{}, c *gin.Context) map[string][]string {
     }
     return validate(data, rules, messages)
 }
-Copy
