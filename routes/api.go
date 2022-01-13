@@ -1,6 +1,7 @@
 package routes
 
 import (
+	controllers "GoHub-Service/app/http/controllers/api/v1"
 	"GoHub-Service/app/http/controllers/api/v1/auth"
 	"GoHub-Service/app/http/middlewares"
 
@@ -48,6 +49,11 @@ func RegisterAPIRoutes(r *gin.Engine) {
 			authGroup.POST("/verify-codes/email", middlewares.LimitPerRoute("20-H"), vcc.SendUsingEmail)
 			// 图片验证码
 			authGroup.POST("/verify-codes/captcha", middlewares.LimitPerRoute("50-H"), vcc.ShowCaptcha)
+
+			uc := new(controllers.UsersController)
+
+			// 获取当前用户
+			v1.GET("/user", middlewares.AuthJWT(), uc.CurrentUser)
 		}
 	}
 }
