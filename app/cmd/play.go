@@ -1,10 +1,6 @@
 package cmd
 
 import (
-    "GoHub-Service/pkg/console"
-    "GoHub-Service/pkg/redis"
-    "time"
-
     "github.com/spf13/cobra"
 )
 
