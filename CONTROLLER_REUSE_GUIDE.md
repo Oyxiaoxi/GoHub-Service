@@ -402,5 +402,5 @@ if ok := middlewares.CheckModelOwnership(c, &model); !ok {
 
 **相关文档**：
 - [代码规范文档](CODING_STANDARDS.md)
-- [代码质量优化说明](CODE_QUALITY_IMPROVEMENTS.md)
 - [优化计划](OPTIMIZATION_PLAN.md)
+- [Service层架构指南](docs/SERVICE_LAYER_GUIDE.md)
