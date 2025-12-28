@@ -35,7 +35,7 @@ func (ctrl *UsersController) Index(c *gin.Context) {
         return
     }
 
-    data, pager, err := ctrl.userService.List(c, 10)
+    listResponse, err := ctrl.userService.List(c, 10)
     if err != nil {
         logger.LogErrorWithContext(c, err, "获取用户列表失败")
         response.Abort500(c, "获取列表失败")
@@ -43,8 +43,8 @@ func (ctrl *UsersController) Index(c *gin.Context) {
     }
 
     response.JSON(c, gin.H{
-        "data":  data,
-        "pager": pager,
+        "data":  listResponse.Users,
+        "pager": listResponse.Paging,
     })
 }
 

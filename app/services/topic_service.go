@@ -7,6 +7,7 @@ import (
 	"GoHub-Service/app/repositories"
 	apperrors "GoHub-Service/pkg/errors"
 	"GoHub-Service/pkg/paginator"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -27,25 +28,72 @@ func NewTopicService() *TopicService {
 
 // TopicCreateDTO 创建话题DTO
 type TopicCreateDTO struct {
-	Title      string
-	Body       string
-	CategoryID string
-	UserID     string
+	Title      string `json:"title" binding:"required,min=3,max=255"`
+	Body       string `json:"body" binding:"required"`
+	CategoryID string `json:"category_id" binding:"required"`
+	UserID     string `json:"user_id" binding:"required"`
 }
 
 // TopicUpdateDTO 更新话题DTO
 type TopicUpdateDTO struct {
-	Title      string
-	Body       string
-	CategoryID string
+	Title      *string `json:"title,omitempty" binding:"omitempty,min=3,max=255"`
+	Body       *string `json:"body,omitempty"`
+	CategoryID *string `json:"category_id,omitempty"`
+}
+
+// TopicResponseDTO 话题响应DTO
+type TopicResponseDTO struct {
+	ID         string    `json:"id"`
+	Title      string    `json:"title"`
+	Body       string    `json:"body"`
+	CategoryID string    `json:"category_id"`
+	UserID     string    `json:"user_id"`
+	CreatedAt  time.Time `json:"created_at"`
+	UpdatedAt  time.Time `json:"updated_at"`
+}
+
+// TopicListResponseDTO 话题列表响应DTO
+type TopicListResponseDTO struct {
+	Topics []TopicResponseDTO `json:"topics"`
+	Paging *paginator.Paging  `json:"paging"`
+}
+
+// toResponseDTO 将Topic模型转换为响应DTO
+func (s *TopicService) toResponseDTO(t *topic.Topic) *TopicResponseDTO {
+	return &TopicResponseDTO{
+		ID:         t.GetStringID(),
+		Title:      t.Title,
+		Body:       t.Body,
+		CategoryID: t.CategoryID,
+		UserID:     t.UserID,
+		CreatedAt:  t.CreatedAt,
+		UpdatedAt:  t.UpdatedAt,
+	}
+}
+
+// toResponseDTOList 将Topic模型列表转换为响应DTO列表
+func (s *TopicService) toResponseDTOList(topics []topic.Topic) []TopicResponseDTO {
+	dtos := make([]TopicResponseDTO, len(topics))
+	for i, t := range topics {
+		dtos[i] = TopicResponseDTO{
+			ID:         t.GetStringID(),
+			Title:      t.Title,
+			Body:       t.Body,
+			CategoryID: t.CategoryID,
+			UserID:     t.UserID,
+			CreatedAt:  t.CreatedAt,
+			UpdatedAt:  t.UpdatedAt,
+		}
+	}
+	return dtos
 }
 
 // GetByID 根据ID获取话题
-func (s *TopicService) GetByID(id string) (*topic.Topic, error) {
+func (s *TopicService) GetByID(id string) (*TopicResponseDTO, error) {
 	// 先从缓存获取
 	topicModel, err := s.cache.GetByID(id)
 	if err == nil && topicModel != nil {
-		return topicModel, nil
+		return s.toResponseDTO(topicModel), nil
 	}
 	
 	// 缓存未命中，从数据库获取
@@ -62,23 +110,26 @@ func (s *TopicService) GetByID(id string) (*topic.Topic, error) {
 	// 设置缓存
 	s.cache.Set(topicModel)
 	
-	return topicModel, nil
+	return s.toResponseDTO(topicModel), nil
 }
 
 // List 获取话题列表
-func (s *TopicService) List(c *gin.Context, perPage int) ([]topic.Topic, *paginator.Paging, error) {
+func (s *TopicService) List(c *gin.Context, perPage int) (*TopicListResponseDTO, error) {
 	// 先从缓存获取
 	topics, found := s.cache.GetList(c)
 	if found && len(topics) > 0 {
 		// 简化处理，实际项目中应该缓存完整的分页信息
 		data, pager, _ := s.repo.List(c, perPage)
-		return data, pager, nil
+		return &TopicListResponseDTO{
+			Topics: s.toResponseDTOList(data),
+			Paging: pager,
+		}, nil
 	}
 	
 	// 缓存未命中，从数据库获取
 	data, pager, err := s.repo.List(c, perPage)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	
 	// 设置缓存
@@ -86,11 +137,14 @@ func (s *TopicService) List(c *gin.Context, perPage int) ([]topic.Topic, *pagina
 		s.cache.SetList(c, data)
 	}
 	
-	return data, pager, nil
+	return &TopicListResponseDTO{
+		Topics: s.toResponseDTOList(data),
+		Paging: pager,
+	}, nil
 }
 
 // Create 创建话题
-func (s *TopicService) Create(dto TopicCreateDTO) (*topic.Topic, error) {
+func (s *TopicService) Create(dto TopicCreateDTO) (*TopicResponseDTO, error) {
 	topicModel := &topic.Topic{
 		Title:      dto.Title,
 		Body:       dto.Body,
@@ -105,11 +159,11 @@ func (s *TopicService) Create(dto TopicCreateDTO) (*topic.Topic, error) {
 	// 清除列表缓存
 	s.cache.ClearList()
 
-	return topicModel, nil
+	return s.toResponseDTO(topicModel), nil
 }
 
 // Update 更新话题
-func (s *TopicService) Update(id string, dto TopicUpdateDTO) (*topic.Topic, error) {
+func (s *TopicService) Update(id string, dto TopicUpdateDTO) (*TopicResponseDTO, error) {
 	topicModel, err := s.repo.GetByID(id)
 	if err != nil {
 		return nil, err
@@ -120,9 +174,16 @@ func (s *TopicService) Update(id string, dto TopicUpdateDTO) (*topic.Topic, erro
 		})
 	}
 
-	topicModel.Title = dto.Title
-	topicModel.Body = dto.Body
-	topicModel.CategoryID = dto.CategoryID
+	// 只更新非空字段
+	if dto.Title != nil {
+		topicModel.Title = *dto.Title
+	}
+	if dto.Body != nil {
+		topicModel.Body = *dto.Body
+	}
+	if dto.CategoryID != nil {
+		topicModel.CategoryID = *dto.CategoryID
+	}
 
 	if err := s.repo.Update(topicModel); err != nil {
 		return nil, err
@@ -132,7 +193,7 @@ func (s *TopicService) Update(id string, dto TopicUpdateDTO) (*topic.Topic, erro
 	s.cache.Delete(id)
 	s.cache.ClearList()
 
-	return topicModel, nil
+	return s.toResponseDTO(topicModel), nil
 }
 
 // Delete 删除话题

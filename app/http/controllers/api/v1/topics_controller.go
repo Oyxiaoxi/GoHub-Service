@@ -52,7 +52,7 @@ func (ctrl *TopicsController) Index(c *gin.Context) {
 		return
 	}
 
-	data, pager, err := ctrl.topicService.List(c, 10)
+	listResponse, err := ctrl.topicService.List(c, 10)
 	if err != nil {
 		logger.LogErrorWithContext(c, err, "获取话题列表失败")
 		response.Abort500(c, "获取列表失败")
@@ -60,8 +60,8 @@ func (ctrl *TopicsController) Index(c *gin.Context) {
 	}
 
 	response.JSON(c, gin.H{
-		"data":  data,
-		"pager": pager,
+		"data":  listResponse.Topics,
+		"pager": listResponse.Paging,
 	})
 }
 
@@ -198,9 +198,9 @@ func (ctrl *TopicsController) Update(c *gin.Context) {
 
 	// 更新话题
 	dto := services.TopicUpdateDTO{
-		Title:      request.Title,
-		Body:       request.Body,
-		CategoryID: request.CategoryID,
+		Title:      &request.Title,
+		Body:       &request.Body,
+		CategoryID: &request.CategoryID,
 	}
 
 	topicModel, err := ctrl.topicService.Update(topicID, dto)
