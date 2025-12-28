@@ -1,7 +1,8 @@
 # GoHub-Service 优化方案
 
 > 创建时间：2025年12月28日  
-> 状态：待实施  
+> 最后更新：2025年12月29日 - v1.3 Service层架构和错误追踪
+> 状态：实施中  
 > 说明：等所有功能开发完成后，按优先级逐步实施
 
 ---
@@ -42,12 +43,22 @@
   - 标准化响应结构 {code, message, data}
   - ApiResponse系列方法
   - 向后兼容旧方法
-- [ ] 创建自定义错误类型
-  - BusinessError（业务错误）
-  - ValidationError（验证错误）
-  - AuthorizationError（授权错误）
-- [ ] 实现错误日志追踪链路
-  -x] Controller辅助工具函数库 ✅ (2025-12-28)
+- [x] 创建自定义错误类型 ✅ (2025-12-29)
+  - pkg/errors/errors.go
+  - AppError结构体：Type, Code, Message, Details, Err, StackTrace, RequestID
+  - 8种错误类型：Business, Validation, Authorization, NotFound, Database, External, Internal
+  - 构造函数：BusinessError, ValidationError, AuthorizationError等
+  - 错误包装：WrapError支持错误链
+  - 堆栈追踪：captureStackTrace自动记录调用栈
+- [x] 实现错误日志追踪链路 ✅ (2025-12-29)
+  - app/http/middlewares/request_id.go：RequestID中间件（UUID生成）
+  - pkg/logger/context.go：上下文感知日志
+  - LogErrorWithContext：自动包含RequestID、ErrorType、StackTrace
+  - LogWithRequestID：通用上下文日志
+  - 完整追踪链路：请求→Service→Error→Logger
+
+#### 2.2 代码复用
+- [x] Controller辅助工具函数库 ✅ (2025-12-28)
   - pkg/controller/helpers.go
   - ID参数处理、模型检查等
 - [x] 提取通用的CRUD操作 ✅ (2025-12-28)
@@ -70,11 +81,7 @@
 - [x] 统一代码注释规范 ✅ (2025-12-28)
   - 完善模型注释
   - 添加使用示例
-- [ ] 添加golangci-lint配置库
-
-#### 2.3 代码规范
 - [ ] 添加golangci-lint配置
-- [ ] 统一代码注释规范
 - [ ] 添加pre-commit hooks
 
 ---
@@ -140,27 +147,33 @@
 - [ ] API错误率监控
 - [ ] 服务健康检查
   - 数据库连接检查
-  -x] Service层架构文档 ✅ (2025-12-28)
-  - pkg/service/base.go
-  - 使用示例和最佳实践
-- [ ] 引入Service层
-  - 业务逻辑从Controller分离
-  - Service层统一事务管理
-- [x] Repository模式文档 ✅ (2025-12-28)
-  - pkg/repository/base.go
-  - 数据访问接口设计指南
-- [ ] Repository模式实施
+  - Redis连接检查
+
+---
 
 ### 5. 架构优化
 
 #### 5.1 服务分层
-- [ ] 引入Service层
+- [x] 引入Service层 ✅ (2025-12-29)
+  - app/services/topic_service.go：完整实现
   - 业务逻辑从Controller分离
-  - Service层统一事务管理
+  - TopicService包含CRUD和所有权检查
+  - 使用DTO进行数据传输（TopicCreateDTO, TopicUpdateDTO）
+  - 集成自定义错误类型
+  - docs/SERVICE_LAYER_GUIDE.md：完整架构文档
+- [x] 实际重构示例 ✅ (2025-12-29)
+  - TopicsController重构使用TopicService
+  - 路由配置更新（RequestID中间件）
+  - 错误处理标准化
+  - 上下文日志集成
+- [ ] 推广到其他Controller
+  - UsersController重构
+  - CategoriesController重构
+  - LinksController重构
 - [ ] Repository模式封装数据访问
   - 统一数据访问接口
   - 便于切换存储实现
-- [ ] DTO层分离
+- [ ] DTO层完善
   - 请求DTO（Request）
   - 响应DTO（Response）
   - 实体模型（Entity）
