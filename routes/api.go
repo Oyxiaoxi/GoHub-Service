@@ -55,7 +55,7 @@ func RegisterAPIRoutes(r *gin.Engine) {
             authGroup.POST("/verify-codes/captcha", middlewares.LimitPerRoute("50-H"), vcc.ShowCaptcha)
         }
 
-        uc := new(controllers.UsersController)
+        uc := controllers.NewUsersController()
         // 获取当前用户
         v1.GET("/user", middlewares.AuthJWT(), uc.CurrentUser)
         usersGroup := v1.Group("/users")
@@ -63,7 +63,7 @@ func RegisterAPIRoutes(r *gin.Engine) {
             usersGroup.GET("", uc.Index)
         }
 
-        cgc := new(controllers.CategoriesController)
+        cgc := controllers.NewCategoriesController()
         cgcGroup := v1.Group("/categories")
         {
             cgcGroup.GET("", cgc.Index)
@@ -82,7 +82,7 @@ func RegisterAPIRoutes(r *gin.Engine) {
             tpcGroup.GET("/:id", tpc.Show)
         }
 
-        lsc := new(controllers.LinksController)
+        lsc := controllers.NewLinksController()
         linksGroup := v1.Group("/links")
         {
             linksGroup.GET("", lsc.Index)
