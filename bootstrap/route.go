@@ -27,8 +27,11 @@ func SetupRoute(router *gin.Engine) {
 func registerGlobalMiddleWare(router *gin.Engine) {
     router.Use(
         middlewares.Logger(),
-        gzip.Gzip(gzip.DefaultCompression), // 启用 Gzip 压缩
         middlewares.Recovery(),
+        middlewares.CORS(),                 // CORS 跨域配置
+        middlewares.SecureHeaders(),        // 安全响应头
+        middlewares.XSSProtection(),        // XSS 防护
+        gzip.Gzip(gzip.DefaultCompression), // 启用 Gzip 压缩
     )
 }
 
