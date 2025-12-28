@@ -4,7 +4,6 @@ import (
     "GoHub-Service/pkg/logger"
     "GoHub-Service/pkg/response"
     "net"
-    "net/http"
     "net/http/httputil"
     "os"
     "strings"

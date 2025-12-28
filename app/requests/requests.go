@@ -2,8 +2,6 @@
 package requests
 
 import (
-	"fmt"
-    "net/http"
     "GoHub-Service/pkg/response"
 
     "github.com/gin-gonic/gin"
