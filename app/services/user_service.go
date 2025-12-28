@@ -17,7 +17,7 @@ type UserService struct{
 // NewUserService 创建用户服务实例
 func NewUserService() *UserService {
 	return &UserService{
-		repo: repository.NewUserRepository(),
+		repo: repositories.NewUserRepository(),
 	}
 }
 
