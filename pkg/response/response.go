@@ -9,6 +9,67 @@ import (
     "gorm.io/gorm"
 )
 
+// Response 统一响应结构
+type Response struct {
+	Code    int         `json:"code"`
+	Message string      `json:"message"`
+	Data    interface{} `json:"data,omitempty"`
+}
+
+// ApiResponse 统一API响应格式
+func ApiResponse(c *gin.Context, httpCode, bizCode int, message string, data interface{}) {
+	if message == "" {
+		message = GetMessage(bizCode)
+	}
+	
+	c.JSON(httpCode, Response{
+		Code:    bizCode,
+		Message: message,
+		Data:    data,
+	})
+}
+
+// ApiSuccess 成功响应（带数据）
+func ApiSuccess(c *gin.Context, data interface{}) {
+	ApiResponse(c, http.StatusOK, CodeSuccess, "", data)
+}
+
+// ApiSuccessWithMessage 成功响应（带消息）
+func ApiSuccessWithMessage(c *gin.Context, message string) {
+	ApiResponse(c, http.StatusOK, CodeSuccess, message, nil)
+}
+
+// ApiError 错误响应
+func ApiError(c *gin.Context, httpCode, bizCode int, message string) {
+	ApiResponse(c, httpCode, bizCode, message, nil)
+	c.Abort()
+}
+
+// ApiErrorWithCode 使用错误码的错误响应
+func ApiErrorWithCode(c *gin.Context, bizCode int) {
+	httpCode := http.StatusBadRequest
+	switch bizCode {
+	case CodeUnauthorized, CodeTokenInvalid, CodeTokenExpired, CodeTokenMissing:
+		httpCode = http.StatusUnauthorized
+	case CodeForbidden:
+		httpCode = http.StatusForbidden
+	case CodeNotFound, CodeUserNotFound, CodeTopicNotFound, CodeCategoryNotFound, CodeLinkNotFound:
+		httpCode = http.StatusNotFound
+	case CodeInternalError, CodeDatabaseError:
+		httpCode = http.StatusInternalServerError
+	case CodeValidationError, CodeInvalidParams:
+		httpCode = http.StatusUnprocessableEntity
+	case CodeTooManyRequests:
+		httpCode = http.StatusTooManyRequests
+	}
+	
+	ApiResponse(c, httpCode, bizCode, GetMessage(bizCode), nil)
+	c.Abort()
+}
+
+
+// ==================== 向后兼容的旧方法（保留） ====================
+
 // JSON 响应 200 和 JSON 数据
 func JSON(c *gin.Context, data interface{}) {
     c.JSON(http.StatusOK, data)
@@ -17,23 +78,20 @@ func JSON(c *gin.Context, data interface{}) {
 // Success 响应 200 和预设『操作成功！』的 JSON 数据
 // 执行某个『没有具体返回数据』的『变更』操作成功后调用，例如删除、修改密码、修改手机号
 func Success(c *gin.Context) {
-    JSON(c, gin.H{
-        "success": true,
-        "message": "操作成功！",
-    })
+    ApiSuccessWithMessage(c, "操作成功！")
 }
 
 // Data 响应 200 和带 data 键的 JSON 数据
 // 执行『更新操作』成功后调用，例如更新话题，成功后返回已更新的话题
 func Data(c *gin.Context, data interface{}) {
-    JSON(c, gin.H{
+    c.JSON(http.StatusOK, gin.H{
         "success": true,
         "data":    data,
     })
 }
 
 // Created 响应 201 和带 data 键的 JSON 数据
-// 执行『更新操作』成功后调用，例如更新话题，成功后返回已更新的话题
+// 执行『创建操作』成功后调用
 func Created(c *gin.Context, data interface{}) {
     c.JSON(http.StatusCreated, gin.H{
         "success": true,
@@ -94,18 +152,10 @@ func Error(c *gin.Context, err error, msg ...string) {
     })
 }
 
-// ValidationError 处理表单验证不通过的错误，返回的 JSON 示例：
-//         {
-//             "errors": {
-//                 "phone": [
-//                     "手机号为必填项，参数名称 phone",
-//                     "手机号长度必须为 11 位的数字"
-//                 ]
-//             },
-//             "message": "请求验证不通过，具体请查看 errors"
-//         }
+// ValidationError 处理表单验证不通过的错误
 func ValidationError(c *gin.Context, errors map[string][]string) {
     c.AbortWithStatusJSON(http.StatusUnprocessableEntity, gin.H{
+        "code":    CodeValidationError,
         "message": "请求验证不通过，具体请查看 errors",
         "errors":  errors,
     })
@@ -115,7 +165,7 @@ func ValidationError(c *gin.Context, errors map[string][]string) {
 // 登录失败、jwt 解析失败时调用
 func Unauthorized(c *gin.Context, msg ...string) {
     c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
-        "message": defaultMessage("请求解析错误，请确认请求格式是否正确。上传文件请使用 multipart 标头，参数请使用 JSON 格式。", msg...),
+        "message": defaultMessage("未授权，请先登录", msg...),
     })
 }
 
@@ -129,3 +179,4 @@ func defaultMessage(defaultMsg string, msg ...string) (message string) {
     }
     return
 }
+
