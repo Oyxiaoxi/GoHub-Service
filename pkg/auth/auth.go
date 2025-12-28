@@ -3,7 +3,7 @@ package auth
 
 import (
     "errors"
-    "gohub/app/models/user"
+    "GoHub-Service/app/models/user"
 )
 
 // Attempt 尝试登录
