@@ -6,6 +6,7 @@ require (
 	github.com/aliyun/alibaba-cloud-sdk-go v1.63.107
 	github.com/bxcodec/faker/v3 v3.8.1
 	github.com/gertd/go-pluralize v0.2.1
+	github.com/gin-contrib/gzip v0.0.6
 	github.com/gin-gonic/gin v1.11.0
 	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/google/uuid v1.6.0

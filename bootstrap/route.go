@@ -7,6 +7,7 @@ import (
     "net/http"
     "strings"
 
+    "github.com/gin-contrib/gzip"
     "github.com/gin-gonic/gin"
 )
 
@@ -26,6 +27,7 @@ func SetupRoute(router *gin.Engine) {
 func registerGlobalMiddleWare(router *gin.Engine) {
     router.Use(
         middlewares.Logger(),
+        gzip.Gzip(gzip.DefaultCompression), // 启用 Gzip 压缩
         middlewares.Recovery(),
     )
 }
