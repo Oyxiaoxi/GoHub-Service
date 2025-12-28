@@ -3,16 +3,18 @@ package topic
 
 import (
     "GoHub-Service/app/models"
-    "GoHub-Service/pkg/database"
-    "GoHub-Service/app/models/user"
     "GoHub-Service/app/models/category"
+    "GoHub-Service/app/models/user"
+    "GoHub-Service/pkg/database"
+
+    "github.com/spf13/cast"
 )
 
 type Topic struct {
     models.BaseModel
 
-    Title      string `json:"title,omitempty" `
-    Body       string `json:"body,omitempty" `
+    Title      string `json:"title,omitempty"`
+    Body       string `json:"body,omitempty"`
     UserID     string `json:"user_id,omitempty"`
     CategoryID string `json:"category_id,omitempty"`
 
@@ -37,4 +39,19 @@ func (topic *Topic) Save() (rowsAffected int64) {
 func (topic *Topic) Delete() (rowsAffected int64) {
     result := database.DB.Delete(&topic)
     return result.RowsAffected
+}
+
+// GetID 实现Model接口
+func (topic *Topic) GetID() uint64 {
+    return topic.ID
+}
+
+// GetOwnerID 实现OwnershipChecker接口，返回资源所有者ID
+func (topic *Topic) GetOwnerID() string {
+    return topic.UserID
+}
+
+// GetStringID 获取字符串格式的ID
+func (topic *Topic) GetStringID() string {
+    return cast.ToString(topic.ID)
 }

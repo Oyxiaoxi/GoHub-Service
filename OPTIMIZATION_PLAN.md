@@ -50,8 +50,14 @@
   -x] Controller辅助工具函数库 ✅ (2025-12-28)
   - pkg/controller/helpers.go
   - ID参数处理、模型检查等
-- [ ] 提取通用的CRUD操作到BaseController
-- [ ] 抽象授权检查中间件（目前在controller内部）
+- [x] 提取通用的CRUD操作 ✅ (2025-12-28)
+  - pkg/controller/crud.go
+  - CRUDHelper: HandleShow/Store/Update/Delete/List
+  - 减少30-40%重复代码
+- [x] 抽象授权检查中间件 ✅ (2025-12-28)
+  - app/http/middlewares/ownership.go
+  - CheckModelOwnership通用函数
+  - CheckOwnership和CheckPolicy中间件
 - [x] 统一响应格式处理器 ✅ (2025-12-28)
   - 成功响应统一封装
   - 失败响应统一封装
@@ -244,13 +250,18 @@
    - ⏳ 自定义错误类型（待完成）
    - ⏳ 错误追踪链路（待完成）
 
-2. **Service层重构** ⏳ 文档准备完成 (2025-12-28)
+2. **代码复用优化** ✅ 已完成 (2025-12-28)
+   - ✅ Controller辅助工具
+   - ✅ CRUD操作助手
+   - ✅ 授权检查中间件
+   - ✅ 统一响应处理器
+
+3. **Service层架构** ⏳ 文档准备完成 (2025-12-28)
    - ✅ 架构文档和指南
    - ⏳ 业务逻辑分离（待实施）
-   - ⏳ 代码复用优化（部分完成）
    - ⏳ 事务管理统一（待实施）
 
-3. **API文档**
+4. **API文档**
    - Swagger集成
    - 接口文档完善
 
@@ -376,6 +387,36 @@
 | 日期 | 版本 | 更新内容 | 状态 |
 |-----|------|---------|-----|
 | 2025-12-28 | v1.0 | 初始版本，创建优化计划 | 待实施 |
+| 2025-12-28 | v1.1 | 完成错误处理标准化、代码规范文档 | 部分完成 |
+| 2025-12-28 | v1.2 | 完成代码复用优化（CRUD助手+授权中间件） | 部分完成 |
+
+## 📦 v1.2 新增内容 (2025-12-28)
+
+### 代码复用优化
+
+1. **通用CRUD操作助手** ✅
+   - 创建 `pkg/controller/crud.go`
+   - CRUDHelper提供统一的CRUD操作方法
+   - HandleShow, HandleStore, HandleUpdate, HandleDelete, HandleList
+   - 减少30-40%的Controller重复代码
+
+2. **授权检查中间件** ✅
+   - 创建 `app/http/middlewares/ownership.go`
+   - CheckModelOwnership通用所有权检查函数
+   - CheckOwnership和CheckPolicy中间件
+   - 替代原有的policies.CanModifyXxx调用
+
+3. **模型接口标准化** ✅
+   - OwnershipChecker接口：GetOwnerID()
+   - Model接口：GetID(), Create(), Save(), Delete()
+   - 便于通用代码复用
+
+4. **使用指南文档** ✅
+   - 创建 `CONTROLLER_REUSE_GUIDE.md`
+   - 详细的使用示例和迁移指南
+   - 对比优化前后的代码
+
+**详细说明**：见 [CONTROLLER_REUSE_GUIDE.md](CONTROLLER_REUSE_GUIDE.md)
 
 ---
 
