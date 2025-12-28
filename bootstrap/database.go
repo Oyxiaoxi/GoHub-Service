@@ -5,7 +5,6 @@ import (
     "fmt"
     "GoHub-Service/pkg/config"
     "GoHub-Service/pkg/database"
-    "GoHub-Service/app/models/user"
     "GoHub-Service/pkg/logger"
 
     "time"
@@ -51,5 +50,4 @@ func SetupDB() {
     // 设置每个链接的过期时间
     database.SQLDB.SetConnMaxLifetime(time.Duration(config.GetInt("database.mysql.max_life_seconds")) * time.Second)
 
-    database.DB.AutoMigrate(&user.User{})
 }
