@@ -2,11 +2,14 @@ package cmd
 
 import (
     "GoHub-Service/bootstrap"
+    _ "GoHub-Service/docs" // Swagger 文档
     "GoHub-Service/pkg/config"
     "GoHub-Service/pkg/console"
     "GoHub-Service/pkg/logger"
 
     "github.com/gin-gonic/gin"
+    ginSwagger "github.com/swaggo/gin-swagger"
+    "github.com/swaggo/files"
     "github.com/spf13/cobra"
 )
 
@@ -31,6 +34,9 @@ func runWeb(cmd *cobra.Command, args []string) {
 
     // 初始化路由绑定
     bootstrap.SetupRoute(router)
+
+    // Swagger 文档路由
+    router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
     // 运行服务器
     err := router.Run(":" + config.Get("app.port"))

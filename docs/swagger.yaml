@@ -1,0 +1,463 @@
+basePath: /v1
+definitions:
+  category.Category:
+    properties:
+      created_at:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  requests.TopicRequest:
+    properties:
+      body:
+        type: string
+      category_id:
+        type: string
+      title:
+        type: string
+    type: object
+  topic.Topic:
+    properties:
+      body:
+        type: string
+      category:
+        allOf:
+        - $ref: '#/definitions/category.Category'
+        description: 通过 category_id 关联分类
+      category_id:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: integer
+      title:
+        type: string
+      updated_at:
+        type: string
+      user:
+        allOf:
+        - $ref: '#/definitions/user.User'
+        description: 通过 user_id 关联用户
+      user_id:
+        type: string
+    type: object
+  user.User:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      updated_at:
+        type: string
+    type: object
+host: localhost:3000
+info:
+  contact:
+    email: support@gohub.com
+    name: API Support
+    url: https://gohub.com/support
+  description: GoHub 论坛服务 API 文档
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  termsOfService: https://gohub.com/terms/
+  title: GoHub API
+  version: "1.0"
+paths:
+  /api/v1/topics:
+    get:
+      consumes:
+      - application/json
+      - application/json
+      description: |-
+        分页获取所有话题
+        获取话题列表，支持分页
+      parameters:
+      - default: 1
+        description: 页码
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: 每页数量
+        in: query
+        name: per_page
+        type: integer
+      - default: 1
+        description: 页码
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: 每页数量
+        in: query
+        name: per_page
+        type: integer
+      produces:
+      - application/json
+      - application/json
+      responses:
+        "200":
+          description: 成功
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 获取话题列表
+      tags:
+      - topics
+      - 话题管理
+    post:
+      consumes:
+      - application/json
+      - application/json
+      description: |-
+        创建新的话题
+        创建一个新的话题
+      parameters:
+      - description: 话题信息
+        in: body
+        name: topic
+        required: true
+        schema:
+          $ref: '#/definitions/requests.TopicRequest'
+      - description: 话题信息
+        in: body
+        name: topic
+        required: true
+        schema:
+          $ref: '#/definitions/requests.TopicRequest'
+      produces:
+      - application/json
+      - application/json
+      responses:
+        "201":
+          description: 创建成功
+          schema:
+            $ref: '#/definitions/topic.Topic'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "422":
+          description: 验证失败
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: 服务器错误
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      - Bearer: []
+      summary: 创建新话题
+      tags:
+      - topics
+      - 话题管理
+  /api/v1/topics/{id}:
+    get:
+      consumes:
+      - application/json
+      - application/json
+      description: |-
+        根据ID获取话题详细信息
+        根据ID获取话题详情
+      parameters:
+      - description: 话题ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: 话题ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      - application/json
+      responses:
+        "200":
+          description: 成功
+          schema:
+            $ref: '#/definitions/topic.Topic'
+        "404":
+          description: 话题不存在
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 获取话题详情
+      tags:
+      - topics
+      - 话题管理
+  /topics:
+    get:
+      consumes:
+      - application/json
+      - application/json
+      description: |-
+        分页获取所有话题
+        获取话题列表，支持分页
+      parameters:
+      - default: 1
+        description: 页码
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: 每页数量
+        in: query
+        name: per_page
+        type: integer
+      - default: 1
+        description: 页码
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: 每页数量
+        in: query
+        name: per_page
+        type: integer
+      produces:
+      - application/json
+      - application/json
+      responses:
+        "200":
+          description: 成功
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 获取话题列表
+      tags:
+      - topics
+      - 话题管理
+    post:
+      consumes:
+      - application/json
+      - application/json
+      description: |-
+        创建新的话题
+        创建一个新的话题
+      parameters:
+      - description: 话题信息
+        in: body
+        name: topic
+        required: true
+        schema:
+          $ref: '#/definitions/requests.TopicRequest'
+      - description: 话题信息
+        in: body
+        name: topic
+        required: true
+        schema:
+          $ref: '#/definitions/requests.TopicRequest'
+      produces:
+      - application/json
+      - application/json
+      responses:
+        "201":
+          description: 创建成功
+          schema:
+            $ref: '#/definitions/topic.Topic'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "422":
+          description: 验证失败
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: 服务器错误
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      - Bearer: []
+      summary: 创建新话题
+      tags:
+      - topics
+      - 话题管理
+  /topics/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: 删除话题（需要所有权）
+      parameters:
+      - description: 话题ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 删除话题
+      tags:
+      - topics
+    get:
+      consumes:
+      - application/json
+      - application/json
+      description: |-
+        根据ID获取话题详细信息
+        根据ID获取话题详情
+      parameters:
+      - description: 话题ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: 话题ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      - application/json
+      responses:
+        "200":
+          description: 成功
+          schema:
+            $ref: '#/definitions/topic.Topic'
+        "404":
+          description: 话题不存在
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 获取话题详情
+      tags:
+      - topics
+      - 话题管理
+    put:
+      consumes:
+      - application/json
+      description: 更新话题信息（需要所有权）
+      parameters:
+      - description: 话题ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: 话题信息
+        in: body
+        name: topic
+        required: true
+        schema:
+          $ref: '#/definitions/requests.TopicRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/topic.Topic'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 更新话题
+      tags:
+      - topics
+securityDefinitions:
+  BearerAuth:
+    description: Type "Bearer" followed by a space and JWT token.
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

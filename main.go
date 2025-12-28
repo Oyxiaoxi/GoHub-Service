@@ -1,3 +1,23 @@
+// @title GoHub API
+// @version 1.0
+// @description GoHub 论坛服务 API 文档
+// @termsOfService https://gohub.com/terms/
+
+// @contact.name API Support
+// @contact.url https://gohub.com/support
+// @contact.email support@gohub.com
+
+// @license.name MIT
+// @license.url https://opensource.org/licenses/MIT
+
+// @host localhost:3000
+// @BasePath /v1
+
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+// @description Type "Bearer" followed by a space and JWT token.
+
 package main
 
 import (
