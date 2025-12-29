@@ -4,6 +4,8 @@ package repositories
 import (
 	"GoHub-Service/app/models/topic"
 	"GoHub-Service/pkg/paginator"
+	"GoHub-Service/pkg/database"
+	"gorm.io/gorm"
 
 	"github.com/gin-gonic/gin"
 )
@@ -17,10 +19,6 @@ type TopicRepository interface {
 	Delete(id string) error
 	BatchCreate(topics []topic.Topic) error
 	BatchDelete(ids []string) error
-import (
-	"GoHub-Service/pkg/database"
-	"gorm.io/gorm"
-)
 }
 
 // topicRepository 话题仓储实现

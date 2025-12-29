@@ -9,6 +9,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"time"
+	"GoHub-Service/pkg/database"
+	"gorm.io/gorm"
 
 	"github.com/gin-gonic/gin"
 )
@@ -26,34 +28,10 @@ type CategoryRepository interface {
 	GetAllCached() ([]category.Category, error)
 	SetListCache(categories []category.Category) error
 	FlushCache() error
-import (
-	"GoHub-Service/pkg/database"
-	"gorm.io/gorm"
-)
 }
 
 // categoryRepository Category仓储实现
 type categoryRepository struct {
-
-	// BatchCreate 批量创建分类（事务包裹）
-	func (r *categoryRepository) BatchCreate(categories []category.Category) error {
-		return database.DB.Transaction(func(tx *gorm.DB) error {
-			if err := tx.Create(&categories).Error; err != nil {
-				return err
-			}
-			return nil
-		})
-	}
-
-	// BatchDelete 批量删除分类（事务包裹）
-	func (r *categoryRepository) BatchDelete(ids []string) error {
-		return database.DB.Transaction(func(tx *gorm.DB) error {
-			if err := tx.Where("id IN ?", ids).Delete(&category.Category{}).Error; err != nil {
-				return err
-			}
-			return nil
-		})
-	}
 	cacheTTL         int
 	cacheKeyCategory string
 	cacheKeyList     string
@@ -62,10 +40,30 @@ type categoryRepository struct {
 // NewCategoryRepository 创建Category仓储实例
 func NewCategoryRepository() CategoryRepository {
 	return &categoryRepository{
-		cacheTTL:         7200,            // 2小时
-		cacheKeyCategory: "category:%s",   // category:id
+		cacheTTL:         7200,
+		cacheKeyCategory: "category:%s",
 		cacheKeyList:     "category:list",
 	}
+}
+
+// BatchCreate 批量创建分类（事务包裹）
+func (r *categoryRepository) BatchCreate(categories []category.Category) error {
+	return database.DB.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Create(&categories).Error; err != nil {
+			return err
+		}
+		return nil
+	})
+}
+
+// BatchDelete 批量删除分类（事务包裹）
+func (r *categoryRepository) BatchDelete(ids []string) error {
+	return database.DB.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Where("id IN ?", ids).Delete(&category.Category{}).Error; err != nil {
+			return err
+		}
+		return nil
+	})
 }
 
 // GetByID 根据ID获取分类
@@ -130,6 +128,7 @@ func (r *categoryRepository) Delete(id string) error {
 
 	return nil
 }
+
 
 // GetAllCached 获取所有分类（缓存）
 func (r *categoryRepository) GetAllCached() ([]category.Category, error) {
