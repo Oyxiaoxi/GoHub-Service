@@ -1,17 +1,15 @@
 # GoHub-Service
 
-基于 Gin 框架的 Go Web 服务项目
+基于 Gin 的论坛后端服务，采用 Service/Repository/Cache 分层，内置 Swagger 文档、限流与安全中间件、结构化日志和 Redis 缓存。
 
-## 功能特性
+## 核心特性
 
-- ✅ 用户注册验证（手机号/邮箱）
-- ✅ 图片验证码
-- ✅ 短信验证码（阿里云SMS）
-- ✅ Redis 缓存
-- ✅ 统一响应处理
-- ✅ 日志系统（Zap + Lumberjack）
-- ✅ 请求验证中间件
-- ✅ 异常恢复中间件
+- 领域分层：Service + Repository + Cache，DTO 输入/输出，Mock 友好的接口定义
+- 安全与性能：配置化 CORS/限流、XSS/SQL 注入防护、Gzip 压缩、RequestID + 结构化日志
+- 数据与缓存：GORM 模型与迁移、Redis 缓存(Topic/Category/Link/User)、分页助手
+- 身份与验证：手机号/邮箱校验、图片验证码、短信验证码（阿里云）、JWT 鉴权
+- API 文档：Swagger UI 暴露在 `/swagger/index.html`
+- 开发工具：Cobra CLI（serve/migrate/seed/make）、脚手架生成器、测试基于 testify
 
 ## 环境要求
 
@@ -21,206 +19,97 @@
 
 ## 快速开始
 
-### 1. 克隆项目
+1) 克隆并安装依赖
 
 ```bash
-git clone <repository-url>
+
 cd GoHub-Service
-```
-
-### 2. 安装依赖
-
-```bash
 go mod download
 ```
 
-### 3. 配置环境变量
-
-复制配置文件并修改：
+2) 配置环境变量
 
 ```bash
 cp .env.example .env
+# 至少设置数据库、Redis、APP_KEY/JWT、短信或邮件等密钥
 ```
 
-编辑 `.env` 文件，配置数据库和其他服务：
+核心配置示例：
 
 ```env
-# 数据库配置
+APP_ENV=local
+APP_PORT=3000
+APP_KEY=please_set_a_random_key
+
 DB_HOST=127.0.0.1
 DB_PORT=3306
-DB_DATABASE=GoHub-Service
+DB_DATABASE=gohub
 DB_USERNAME=root
-DB_PASSWORD=your_password
+DB_PASSWORD=secret
 
-# Redis 配置
 REDIS_HOST=127.0.0.1
 REDIS_PORT=6379
+REDIS_PASSWORD=
+
+JWT_SECRET=please_set_jwt_secret
 ```
 
-### 4. 启动服务
+3) 初始化数据
 
 ```bash
-# 启动 Redis（如果未启动）
-redis-server
+# 运行迁移
+go run main.go migrate up
 
-# 启动应用
-go run main.go
+# 可选：导入示例数据
+go run main.go seed
 ```
 
-服务将在 `http://localhost:3000` 启动
-
-## 开发测试
-
-### 测试验证码功能
-
-由于阿里云短信服务需要账户余额，在开发环境中可以使用测试手机号：
-
-**方法一：使用测试手机号前缀**
-
-配置文件中 `verifycode.debug_phone_prefix` 设置为 `000`，使用以 `000` 开头的手机号：
-
-```json
-POST /v1/auth/verify-codes/phone
-{
-    "phone": "00012345678",
-    "captcha_id": "captcha_skip_test",
-    "captcha_answer": "123456"
-}
-```
-
-这样会跳过实际的短信发送，直接使用配置的 `debug_code`（默认 123456）
-
-**方法二：配置阿里云短信服务**
-
-1. 登录[阿里云短信服务控制台](https://dysms.console.aliyun.com/)
-2. 获取 AccessKey ID 和 AccessKey Secret
-3. 配置短信签名和模板
-4. 充值账户余额
-5. 在 `.env` 中配置：
-
-```env
-SMS_ALIYUN_ACCESS_ID=your_access_key_id
-SMS_ALIYUN_ACCESS_SECRET=your_access_key_secret
-SMS_ALIYUN_SIGN_NAME=your_sign_name
-SMS_ALIYUN_TEMPLATE_CODE=SMS_xxxxxx
-```
-
-### API 端点
-
-#### 认证相关
-
-- `POST /v1/auth/signup/phone/exist` - 检查手机号是否已注册
-- `POST /v1/auth/signup/email/exist` - 检查邮箱是否已注册
-- `POST /v1/auth/verify-codes/captcha` - 获取图片验证码
-- `POST /v1/auth/verify-codes/phone` - 发送手机验证码
-
-#### 图片验证码示例
+4) 启动服务
 
 ```bash
-# 获取图片验证码
-curl -X POST http://localhost:3000/v1/auth/verify-codes/captcha
-
-# 响应
-{
-    "captcha_id": "6MRHuD6MVFgO9cxF4nYQ",
-    "captcha_image": "data:image/png;base64,..."
-}
+go run main.go serve        # 等同直接 go run main.go
+# 服务默认监听 http://localhost:3000
 ```
 
-#### 手机验证码示例
+## 常用命令
 
-```bash
-# 发送验证码（生产环境）
-curl -X POST http://localhost:3000/v1/auth/verify-codes/phone \
-  -H "Content-Type: application/json" \
-  -d '{
-    "phone": "18800000000",
-    "captcha_id": "6MRHuD6MVFgO9cxF4nYQ",
-    "captcha_answer": "673053"
-  }'
-
-# 发送验证码（开发测试 - 使用测试手机号）
-curl -X POST http://localhost:3000/v1/auth/verify-codes/phone \
-  -H "Content-Type: application/json" \
-  -d '{
-    "phone": "00012345678",
-    "captcha_id": "captcha_skip_test",
-    "captcha_answer": "123456"
-  }'
-```
+- 运行 Web 服务：`go run main.go serve`
+- 数据库迁移：`go run main.go migrate up` / `down` / `refresh`
+- 数据填充：`go run main.go seed` (或指定 seeder 名称)
+- 生成代码脚手架：`go run main.go make --help`
+- 运行测试：`go test ./...`
 
 ## 项目结构
 
 ```
-GoHub-Service/
-├── app/
-│   ├── http/
-│   │   ├── controllers/    # 控制器
-│   │   └── middlewares/    # 中间件
-│   ├── models/             # 数据模型
-│   └── requests/           # 请求验证
-├── bootstrap/              # 初始化模块
-├── config/                 # 配置文件
-├── pkg/                    # 公共包
-│   ├── app/               # 应用帮助函数
-│   ├── captcha/           # 图片验证码
-│   ├── config/            # 配置管理
-│   ├── database/          # 数据库
-│   ├── helpers/           # 工具函数
-│   ├── logger/            # 日志
-│   ├── redis/             # Redis 客户端
-│   ├── response/          # 响应处理
-│   ├── sms/               # 短信服务
-│   └── verifycode/        # 验证码
-├── routes/                # 路由
-└── storage/               # 存储（日志等）
+app/            # 控制器、服务、仓储、请求验证、策略
+bootstrap/      # 启动期初始化（DB/Redis/Logger/Cache/Route）
+config/         # 配置定义（app, db, redis, jwt, limiter, cors, sms, mail, etc.）
+database/       # 迁移、工厂、种子数据
+docs/           # 安全、DTO、日志、性能与服务层指南
+pkg/            # 通用库（auth, cache, controller helper, paginator, logger, limiter 等）
+routes/         # 路由注册
+storage/        # 日志与临时文件
 ```
 
-## 技术栈
+## 文档与指南
 
-- **Web框架**: [Gin](https://github.com/gin-gonic/gin)
-- **ORM**: [GORM](https://gorm.io/)
-- **日志**: [Zap](https://github.com/uber-go/zap)
-- **配置**: [Viper](https://github.com/spf13/viper)
-- **验证**: [govalidator](https://github.com/thedevsaddam/govalidator)
-- **Redis**: [go-redis](https://github.com/go-redis/redis)
-- **短信**: [阿里云SDK](https://github.com/aliyun/alibaba-cloud-sdk-go)
+- 代码规范：[CODING_STANDARDS.md](CODING_STANDARDS.md)
+- 控制器复用指南：[CONTROLLER_REUSE_GUIDE.md](CONTROLLER_REUSE_GUIDE.md)
+- 服务层架构：[docs/SERVICE_LAYER_GUIDE.md](docs/SERVICE_LAYER_GUIDE.md)
+- DTO 设计与实现：[docs/DTO_GUIDE.md](docs/DTO_GUIDE.md) | [docs/DTO_IMPLEMENTATION_SUMMARY.md](docs/DTO_IMPLEMENTATION_SUMMARY.md)
+- 安全与限流：[docs/API_SECURITY.md](docs/API_SECURITY.md)
+- 日志与性能：[docs/LOGGING_GUIDE.md](docs/LOGGING_GUIDE.md) | [docs/PERFORMANCE_OPTIMIZATION.md](docs/PERFORMANCE_OPTIMIZATION.md)
+- 优化计划进展：[OPTIMIZATION_PLAN.md](OPTIMIZATION_PLAN.md)
 
-## 常见问题
+## 开发提示
 
-### 1. 短信发送失败：账户余额不足
-
-**问题**: 日志显示 `isv.AMOUNT_NOT_ENOUGH - 账户余额不足`
-
-**解决方案**:
-- 开发测试：使用测试手机号 `000xxxxxxxx`
-- 生产环境：在阿里云控制台充值
-
-### 2. Redis 连接失败
-
-**问题**: `dial tcp 127.0.0.1:6379: connect: connection refused`
-
-**解决方案**:
-```bash
-# macOS
-brew services start redis
-
-# Linux
-sudo systemctl start redis
-
-# 或直接运行
-redis-server
-```
-
-### 3. 数据库连接失败
-
-**问题**: 无法连接到 MySQL
-
-**解决方案**:
-- 检查 MySQL 服务是否启动
-- 确认 `.env` 中的数据库配置正确
-- 确保数据库已创建：`CREATE DATABASE GoHub-Service;`
+- Swagger：启动后访问 `http://localhost:3000/swagger/index.html`
+- 限流/CORS：通过 config/limiter.go 与 config/cors.go 的 env 配置启用/调优
+- Redis 缓存：服务层优先读缓存，写操作会刷新相关键；确保 Redis 可用
+- 日志：Zap + Lumberjack，默认输出到 `storage/logs`
 
 ## License
 
-MIT License
+MIT
+- `POST /v1/auth/verify-codes/phone` - 发送手机验证码
