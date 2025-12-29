@@ -25,14 +25,16 @@ func SetupRoute(router *gin.Engine) {
 }
 
 func registerGlobalMiddleWare(router *gin.Engine) {
+    // 推荐注册顺序：CORS → SecureHeaders → XSSProtection → RequestID → Recovery → Logger → ForceUA → Gzip
     router.Use(
-        middlewares.Logger(),
-        middlewares.Recovery(),
-        middlewares.ForceUA(),              // 强制请求必须附带 User-Agent 标头
-        middlewares.CORS(),                 // CORS 跨域配置
-        middlewares.SecureHeaders(),        // 安全响应头
-        middlewares.XSSProtection(),        // XSS 防护
-        gzip.Gzip(gzip.DefaultCompression), // 启用 Gzip 压缩
+        middlewares.CORS(),                 // 1. CORS 跨域配置，最先处理
+        middlewares.SecureHeaders(),        // 2. 安全响应头
+        middlewares.XSSProtection(),        // 3. XSS 防护
+        middlewares.RequestID(),            // 4. 请求唯一ID
+        middlewares.Recovery(),             // 5. Panic 恢复，保证后续中间件能捕获异常
+        middlewares.Logger(),               // 6. 日志记录，捕获所有请求日志
+        middlewares.ForceUA(),              // 7. 强制 User-Agent，可根据需要调整顺序
+        gzip.Gzip(gzip.DefaultCompression), // 8. 启用 Gzip 压缩
     )
 }
 

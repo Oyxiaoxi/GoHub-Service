@@ -3,6 +3,7 @@ package services
 
 import (
 	"GoHub-Service/app/models/link"
+	apperrors "GoHub-Service/pkg/errors"
 	"time"
 )
 
@@ -55,9 +56,12 @@ func (s *LinkService) toResponseDTOList(links []link.Link) []LinkResponseDTO {
 }
 
 // GetAllCached 获取所有缓存的友情链接
-func (s *LinkService) GetAllCached() *LinkListResponseDTO {
+func (s *LinkService) GetAllCached() (*LinkListResponseDTO, *apperrors.AppError) {
 	links := link.AllCached()
+	if links == nil {
+		return nil, apperrors.NotFoundError("友情链接")
+	}
 	return &LinkListResponseDTO{
 		Links: s.toResponseDTOList(links),
-	}
+	}, nil
 }

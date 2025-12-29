@@ -4,6 +4,7 @@ package services
 import (
 	"GoHub-Service/app/models/category"
 	"GoHub-Service/app/repositories"
+	apperrors "GoHub-Service/pkg/errors"
 	"GoHub-Service/pkg/paginator"
 	"time"
 
@@ -79,7 +80,7 @@ func (s *CategoryService) toResponseDTOList(categories []category.Category) []Ca
 func (s *CategoryService) GetByID(id string) (*CategoryResponseDTO, error) {
 	c, err := s.repo.GetByID(id)
 	if err != nil {
-		return nil, err
+		return nil, apperrors.WrapError(err, "获取分类失败")
 	}
 	return s.toResponseDTO(c), nil
 }
@@ -88,9 +89,8 @@ func (s *CategoryService) GetByID(id string) (*CategoryResponseDTO, error) {
 func (s *CategoryService) List(c *gin.Context, perPage int) (*CategoryListResponseDTO, error) {
 	categories, paging, err := s.repo.List(c, perPage)
 	if err != nil {
-		return nil, err
+		return nil, apperrors.WrapError(err, "获取分类列表失败")
 	}
-	
 	return &CategoryListResponseDTO{
 		Categories: s.toResponseDTOList(categories),
 		Paging:     paging,
@@ -105,7 +105,7 @@ func (s *CategoryService) Create(dto CategoryCreateDTO) (*CategoryResponseDTO, e
 	}
 
 	if err := s.repo.Create(categoryModel); err != nil {
-		return nil, err
+		return nil, apperrors.WrapError(err, "创建分类失败")
 	}
 
 	return s.toResponseDTO(categoryModel), nil
@@ -115,7 +115,7 @@ func (s *CategoryService) Create(dto CategoryCreateDTO) (*CategoryResponseDTO, e
 func (s *CategoryService) Update(id string, dto CategoryUpdateDTO) (*CategoryResponseDTO, error) {
 	categoryModel, err := s.repo.GetByID(id)
 	if err != nil {
-		return nil, err
+		return nil, apperrors.WrapError(err, "获取分类失败")
 	}
 
 	// 只更新非空字段
@@ -127,7 +127,7 @@ func (s *CategoryService) Update(id string, dto CategoryUpdateDTO) (*CategoryRes
 	}
 
 	if err := s.repo.Update(categoryModel); err != nil {
-		return nil, err
+		return nil, apperrors.WrapError(err, "更新分类失败")
 	}
 
 	return s.toResponseDTO(categoryModel), nil

@@ -89,54 +89,39 @@ func (s *TopicService) toResponseDTOList(topics []topic.Topic) []TopicResponseDT
 }
 
 // GetByID 根据ID获取话题
-func (s *TopicService) GetByID(id string) (*TopicResponseDTO, error) {
-	// 先从缓存获取
+func (s *TopicService) GetByID(id string) (*TopicResponseDTO, *apperrors.AppError) {
 	topicModel, err := s.cache.GetByID(id)
 	if err == nil && topicModel != nil {
 		return s.toResponseDTO(topicModel), nil
 	}
-	
-	// 缓存未命中，从数据库获取
 	topicModel, err = s.repo.GetByID(id)
 	if err != nil {
-		return nil, err
+		return nil, apperrors.WrapError(err, "获取话题失败")
 	}
 	if topicModel == nil {
-		return nil, apperrors.NotFoundError("话题").WithDetails(map[string]interface{}{
-			"topic_id": id,
-		})
+		return nil, apperrors.NotFoundError("话题").WithDetails(map[string]interface{}{"topic_id": id})
 	}
-	
-	// 设置缓存
 	s.cache.Set(topicModel)
-	
 	return s.toResponseDTO(topicModel), nil
 }
 
 // List 获取话题列表
-func (s *TopicService) List(c *gin.Context, perPage int) (*TopicListResponseDTO, error) {
-	// 先从缓存获取
+func (s *TopicService) List(c *gin.Context, perPage int) (*TopicListResponseDTO, *apperrors.AppError) {
 	topics, found := s.cache.GetList(c)
 	if found && len(topics) > 0 {
-		// 简化处理，实际项目中应该缓存完整的分页信息
 		data, pager, _ := s.repo.List(c, perPage)
 		return &TopicListResponseDTO{
 			Topics: s.toResponseDTOList(data),
 			Paging: pager,
 		}, nil
 	}
-	
-	// 缓存未命中，从数据库获取
 	data, pager, err := s.repo.List(c, perPage)
 	if err != nil {
-		return nil, err
+		return nil, apperrors.WrapError(err, "获取话题列表失败")
 	}
-	
-	// 设置缓存
 	if len(data) > 0 {
 		s.cache.SetList(c, data)
 	}
-	
 	return &TopicListResponseDTO{
 		Topics: s.toResponseDTOList(data),
 		Paging: pager,
@@ -144,37 +129,29 @@ func (s *TopicService) List(c *gin.Context, perPage int) (*TopicListResponseDTO,
 }
 
 // Create 创建话题
-func (s *TopicService) Create(dto TopicCreateDTO) (*TopicResponseDTO, error) {
+func (s *TopicService) Create(dto TopicCreateDTO) (*TopicResponseDTO, *apperrors.AppError) {
 	topicModel := &topic.Topic{
 		Title:      dto.Title,
 		Body:       dto.Body,
 		CategoryID: dto.CategoryID,
 		UserID:     dto.UserID,
 	}
-
 	if err := s.repo.Create(topicModel); err != nil {
-		return nil, err
+		return nil, apperrors.WrapError(err, "创建话题失败")
 	}
-
-	// 清除列表缓存
 	s.cache.ClearList()
-
 	return s.toResponseDTO(topicModel), nil
 }
 
 // Update 更新话题
-func (s *TopicService) Update(id string, dto TopicUpdateDTO) (*TopicResponseDTO, error) {
+func (s *TopicService) Update(id string, dto TopicUpdateDTO) (*TopicResponseDTO, *apperrors.AppError) {
 	topicModel, err := s.repo.GetByID(id)
 	if err != nil {
-		return nil, err
+		return nil, apperrors.WrapError(err, "获取话题失败")
 	}
 	if topicModel == nil {
-		return nil, apperrors.NotFoundError("话题").WithDetails(map[string]interface{}{
-			"topic_id": id,
-		})
+		return nil, apperrors.NotFoundError("话题").WithDetails(map[string]interface{}{"topic_id": id})
 	}
-
-	// 只更新非空字段
 	if dto.Title != nil {
 		topicModel.Title = *dto.Title
 	}
@@ -184,37 +161,30 @@ func (s *TopicService) Update(id string, dto TopicUpdateDTO) (*TopicResponseDTO,
 	if dto.CategoryID != nil {
 		topicModel.CategoryID = *dto.CategoryID
 	}
-
 	if err := s.repo.Update(topicModel); err != nil {
-		return nil, err
+		return nil, apperrors.WrapError(err, "更新话题失败")
 	}
-
-	// 删除缓存
 	s.cache.Delete(id)
 	s.cache.ClearList()
-
 	return s.toResponseDTO(topicModel), nil
 }
 
 // Delete 删除话题
-func (s *TopicService) Delete(id string) error {
+func (s *TopicService) Delete(id string) *apperrors.AppError {
 	err := s.repo.Delete(id)
 	if err != nil {
-		return err
+		return apperrors.WrapError(err, "删除话题失败")
 	}
-	
-	// 删除缓存
 	s.cache.Delete(id)
 	s.cache.ClearList()
-	
 	return nil
 }
 
 // CheckOwnership 检查用户是否拥有该话题
-func (s *TopicService) CheckOwnership(topicID, userID string) (bool, error) {
+func (s *TopicService) CheckOwnership(topicID, userID string) (bool, *apperrors.AppError) {
 	topicModel, err := s.repo.GetByID(topicID)
 	if err != nil {
-		return false, err
+		return false, apperrors.WrapError(err, "检查话题所有权失败")
 	}
 	return topicModel.UserID == userID, nil
 }

@@ -5,6 +5,7 @@ package services
 import (
 	"GoHub-Service/app/models/user"
 	"GoHub-Service/app/repositories"
+	apperrors "GoHub-Service/pkg/errors"
 	"GoHub-Service/pkg/paginator"
 	"fmt"
 	"time"
@@ -97,21 +98,20 @@ func (s *UserService) toResponseDTOList(users []user.User) []UserResponseDTO {
 }
 
 // GetByID 根据ID获取用户
-func (s *UserService) GetByID(id string) (*UserResponseDTO, error) {
+func (s *UserService) GetByID(id string) (*UserResponseDTO, *apperrors.AppError) {
 	u, err := s.repo.GetByID(id)
 	if err != nil {
-		return nil, err
+		return nil, apperrors.WrapError(err, "获取用户失败")
 	}
 	return s.toResponseDTO(u), nil
 }
 
 // List 获取用户列表
-func (s *UserService) List(c *gin.Context, perPage int) (*UserListResponseDTO, error) {
+func (s *UserService) List(c *gin.Context, perPage int) (*UserListResponseDTO, *apperrors.AppError) {
 	users, paging, err := s.repo.List(c, perPage)
 	if err != nil {
-		return nil, err
+		return nil, apperrors.WrapError(err, "获取用户列表失败")
 	}
-	
 	return &UserListResponseDTO{
 		Users:  s.toResponseDTOList(users),
 		Paging: paging,

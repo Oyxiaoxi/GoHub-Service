@@ -20,5 +20,10 @@ func NewLinksController() *LinksController {
 }
 
 func (ctrl *LinksController) Index(c *gin.Context) {
-    response.Data(c, ctrl.linkService.GetAllCached())
+    listResponse, err := ctrl.linkService.GetAllCached()
+    if err != nil {
+        response.ApiError(c, 500, err.Code, err.Message)
+        return
+    }
+    response.Data(c, listResponse)
 }

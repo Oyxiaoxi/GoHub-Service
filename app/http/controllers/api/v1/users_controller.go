@@ -40,10 +40,9 @@ func (ctrl *UsersController) Index(c *gin.Context) {
     listResponse, err := ctrl.userService.List(c, 10)
     if err != nil {
         logger.LogErrorWithContext(c, err, "获取用户列表失败")
-        response.Abort500(c, "获取列表失败")
+        response.ApiError(c, 500, err.Code, err.Message)
         return
     }
-
     response.JSON(c, gin.H{
         "data":  listResponse.Users,
         "pager": listResponse.Paging,

@@ -37,10 +37,12 @@ func (ctrl *CategoriesController) Store(c *gin.Context) {
 
     categoryModel, err := ctrl.categoryService.Create(dto)
     if err != nil {
-        logger.LogErrorWithContext(c, err, "创建分类失败",
-            zap.String("name", request.Name),
-        )
-        response.Abort500(c, "创建失败，请稍后尝试~")
+        logger.LogErrorWithContext(c, err, "创建分类失败")
+        if appErr, ok := err.(*apperrors.AppError); ok {
+            response.ApiError(c, 500, appErr.Code, appErr.Message)
+        } else {
+            response.Abort500(c, "创建失败，请稍后尝试~")
+        }
         return
     }
 
