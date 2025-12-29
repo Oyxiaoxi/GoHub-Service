@@ -1,3 +1,4 @@
+
 // Package services 用户业务逻辑服务
 package services
 
@@ -5,10 +6,24 @@ import (
 	"GoHub-Service/app/models/user"
 	"GoHub-Service/app/repositories"
 	"GoHub-Service/pkg/paginator"
+	"fmt"
 	"time"
-
 	"github.com/gin-gonic/gin"
 )
+
+// UpdateProfile 更新当前用户信息
+func (s *UserService) UpdateProfile(currentUser *user.User, name, city, introduction string) (*user.User, error) {
+	currentUser.Name = name
+	currentUser.City = city
+	currentUser.Introduction = introduction
+	rowsAffected := currentUser.Save()
+	if rowsAffected > 0 {
+		// 更新缓存
+		_ = s.repo.SetCache(currentUser)
+		return currentUser, nil
+	}
+	return nil, fmt.Errorf("用户信息更新失败")
+}
 
 // UserService 用户服务
 type UserService struct{

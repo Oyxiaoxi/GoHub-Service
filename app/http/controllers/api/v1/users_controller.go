@@ -48,3 +48,19 @@ func (ctrl *UsersController) Index(c *gin.Context) {
     })
 }
 
+func (ctrl *UsersController) UpdateProfile(c *gin.Context) {
+
+    request := requests.UserUpdateProfileRequest{}
+    if ok := requests.Validate(c, &request, requests.UserUpdateProfile); !ok {
+        return
+    }
+
+    currentUser := auth.CurrentUser(c)
+    updatedUser, err := ctrl.userService.UpdateProfile(&currentUser, request.Name, request.City, request.Introduction)
+    if err != nil {
+        logger.LogErrorWithContext(c, err, "用户信息更新失败")
+        response.Abort500(c, "更新失败，请稍后尝试~")
+        return
+    }
+    response.Data(c, updatedUser)
+}

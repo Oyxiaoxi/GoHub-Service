@@ -11,81 +11,74 @@ import (
 )
 
 // RegisterAPIRoutes 注册 API 相关路由
+
 func RegisterAPIRoutes(r *gin.Engine) {
-
-    // 测试一个 v1 的路由组，我们所有的 v1 版本的路由都将存放到这里
     v1 := r.Group("/v1")
+    v1.Use(
+        middlewares.RequestID(),
+        middlewares.LimitIP("200-H"),
+    )
 
-    // 全局中间件
-    v1.Use(middlewares.RequestID()) // RequestID 追踪
-    // 全局限流中间件：每小时限流。这里是所有 API （根据 IP）请求加起来。
-    // 作为参考 Github API 每小时最多 60 个请求（根据 IP）。
-    // 测试时，可以调高一点。
-    v1.Use(middlewares.LimitIP("200-H"))
+    // 控制器实例化，便于复用
+    loginCtrl := new(auth.LoginController)
+    passwordCtrl := new(auth.PasswordController)
+    signupCtrl := new(auth.SignupController)
+    verifyCodeCtrl := new(auth.VerifyCodeController)
+    usersCtrl := controllers.NewUsersController()
+    categoriesCtrl := controllers.NewCategoriesController()
+    topicsCtrl := controllers.NewTopicsController()
+    linksCtrl := controllers.NewLinksController()
 
+    // Auth 路由组
+    authGroup := v1.Group("/auth", middlewares.LimitIP("1000-H"))
     {
-        authGroup := v1.Group("/auth")
-        // 限流中间件：每小时限流，作为参考 Github API 每小时最多 60 个请求（根据 IP）
-        // 测试时，可以调高一点
-        authGroup.Use(middlewares.LimitIP("1000-H"))
-        {
-            // 登录
-            lgc := new(auth.LoginController)
-            authGroup.POST("/login/using-phone", middlewares.GuestJWT(), lgc.LoginByPhone)
-            authGroup.POST("/login/using-password", middlewares.GuestJWT(), lgc.LoginByPassword)
-            authGroup.POST("/login/refresh-token", middlewares.AuthJWT(), lgc.RefreshToken)
+        authGroup.POST("/login/using-phone", middlewares.GuestJWT(), loginCtrl.LoginByPhone)
+        authGroup.POST("/login/using-password", middlewares.GuestJWT(), loginCtrl.LoginByPassword)
+        authGroup.POST("/login/refresh-token", middlewares.AuthJWT(), loginCtrl.RefreshToken)
 
-            // 重置密码
-            pwc := new(auth.PasswordController)
-            authGroup.POST("/password-reset/using-email", middlewares.GuestJWT(), pwc.ResetByEmail)
-            authGroup.POST("/password-reset/using-phone", middlewares.GuestJWT(), pwc.ResetByPhone)
+        authGroup.POST("/password-reset/using-email", middlewares.GuestJWT(), passwordCtrl.ResetByEmail)
+        authGroup.POST("/password-reset/using-phone", middlewares.GuestJWT(), passwordCtrl.ResetByPhone)
 
-            // 注册用户
-            suc := new(auth.SignupController)
-            authGroup.POST("/signup/using-phone", middlewares.GuestJWT(), suc.SignupUsingPhone)
-            authGroup.POST("/signup/using-email", middlewares.GuestJWT(), suc.SignupUsingEmail)
-            authGroup.POST("/signup/phone/exist", middlewares.GuestJWT(), middlewares.LimitPerRoute("60-H"), suc.IsPhoneExist)
-            authGroup.POST("/signup/email/exist", middlewares.GuestJWT(), middlewares.LimitPerRoute("60-H"), suc.IsEmailExist)
+        authGroup.POST("/signup/using-phone", middlewares.GuestJWT(), signupCtrl.SignupUsingPhone)
+        authGroup.POST("/signup/using-email", middlewares.GuestJWT(), signupCtrl.SignupUsingEmail)
+        authGroup.POST("/signup/phone/exist", middlewares.GuestJWT(), middlewares.LimitPerRoute("60-H"), signupCtrl.IsPhoneExist)
+        authGroup.POST("/signup/email/exist", middlewares.GuestJWT(), middlewares.LimitPerRoute("60-H"), signupCtrl.IsEmailExist)
 
-            // 发送验证码
-            vcc := new(auth.VerifyCodeController)
-            authGroup.POST("/verify-codes/phone", middlewares.LimitPerRoute("20-H"), vcc.SendUsingPhone)
-            authGroup.POST("/verify-codes/email", middlewares.LimitPerRoute("20-H"), vcc.SendUsingEmail)
-            // 图片验证码
-            authGroup.POST("/verify-codes/captcha", middlewares.LimitPerRoute("50-H"), vcc.ShowCaptcha)
-        }
+        authGroup.POST("/verify-codes/phone", middlewares.LimitPerRoute("20-H"), verifyCodeCtrl.SendUsingPhone)
+        authGroup.POST("/verify-codes/email", middlewares.LimitPerRoute("20-H"), verifyCodeCtrl.SendUsingEmail)
+        authGroup.POST("/verify-codes/captcha", middlewares.LimitPerRoute("50-H"), verifyCodeCtrl.ShowCaptcha)
+    }
 
-        uc := controllers.NewUsersController()
-        // 获取当前用户
-        v1.GET("/user", middlewares.AuthJWT(), uc.CurrentUser)
-        usersGroup := v1.Group("/users")
-        {
-            usersGroup.GET("", uc.Index)
-        }
+    // 用户相关
+    v1.GET("/user", middlewares.AuthJWT(), usersCtrl.CurrentUser)
+    usersGroup := v1.Group("/users")
+    {
+        usersGroup.GET("", usersCtrl.Index)
+        usersGroup.PUT("", middlewares.AuthJWT(), usersCtrl.UpdateProfile)
+    }
 
-        cgc := controllers.NewCategoriesController()
-        cgcGroup := v1.Group("/categories")
-        {
-            cgcGroup.GET("", cgc.Index)
-            cgcGroup.POST("", middlewares.AuthJWT(), cgc.Store)
-            cgcGroup.PUT("/:id", middlewares.AuthJWT(), cgc.Update)
-            cgcGroup.DELETE("/:id", middlewares.AuthJWT(), cgc.Delete)
-        }
+    // 分类相关
+    categoriesGroup := v1.Group("/categories")
+    {
+        categoriesGroup.GET("", categoriesCtrl.Index)
+        categoriesGroup.POST("", middlewares.AuthJWT(), categoriesCtrl.Store)
+        categoriesGroup.PUT(":id", middlewares.AuthJWT(), categoriesCtrl.Update)
+        categoriesGroup.DELETE(":id", middlewares.AuthJWT(), categoriesCtrl.Delete)
+    }
 
-        tpc := controllers.NewTopicsController()
-        tpcGroup := v1.Group("/topics")
-        {
-            tpcGroup.GET("", tpc.Index)
-            tpcGroup.POST("", middlewares.AuthJWT(), tpc.Store)
-            tpcGroup.PUT("/:id", middlewares.AuthJWT(), tpc.Update)
-            tpcGroup.DELETE("/:id", middlewares.AuthJWT(), tpc.Delete)
-            tpcGroup.GET("/:id", tpc.Show)
-        }
+    // 话题相关
+    topicsGroup := v1.Group("/topics")
+    {
+        topicsGroup.GET("", topicsCtrl.Index)
+        topicsGroup.POST("", middlewares.AuthJWT(), topicsCtrl.Store)
+        topicsGroup.PUT(":id", middlewares.AuthJWT(), topicsCtrl.Update)
+        topicsGroup.DELETE(":id", middlewares.AuthJWT(), topicsCtrl.Delete)
+        topicsGroup.GET(":id", topicsCtrl.Show)
+    }
 
-        lsc := controllers.NewLinksController()
-        linksGroup := v1.Group("/links")
-        {
-            linksGroup.GET("", lsc.Index)
-        }
+    // 友情链接
+    linksGroup := v1.Group("/links")
+    {
+        linksGroup.GET("", linksCtrl.Index)
     }
 }
