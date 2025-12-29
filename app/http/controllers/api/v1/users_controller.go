@@ -6,6 +6,8 @@ import (
     "GoHub-Service/pkg/auth"
     "GoHub-Service/pkg/logger"
     "GoHub-Service/pkg/response"
+    "GoHub-Service/pkg/file"
+    "GoHub-Service/pkg/config"
 
     "github.com/gin-gonic/gin"
 )
@@ -82,4 +84,64 @@ func (ctrl *UsersController) UpdateEmail(c *gin.Context) {
         // 失败，显示错误提示
         response.Abort500(c, "更新失败，请稍后尝试~")
     }
+}
+
+func (ctrl *UsersController) UpdatePhone(c *gin.Context) {
+
+    request := requests.UserUpdatePhoneRequest{}
+    if ok := requests.Validate(c, &request, requests.UserUpdatePhone); !ok {
+        return
+    }
+
+    currentUser := auth.CurrentUser(c)
+    currentUser.Phone = request.Phone
+    rowsAffected := currentUser.Save()
+
+    if rowsAffected > 0 {
+        response.Success(c)
+    } else {
+        response.Abort500(c, "更新失败，请稍后尝试~")
+    }
+}
+
+func (ctrl *UsersController) UpdatePassword(c *gin.Context) {
+
+    request := requests.UserUpdatePasswordRequest{}
+    if ok := requests.Validate(c, &request, requests.UserUpdatePassword); !ok {
+        return
+    }
+
+    currentUser := auth.CurrentUser(c)
+    // 验证原始密码是否正确
+    _, err := auth.Attempt(currentUser.Name, request.Password)
+    if err != nil {
+        // 失败，显示错误提示
+        response.Unauthorized(c, "原密码不正确")
+    } else {
+        // 更新密码为新密码
+        currentUser.Password = request.NewPassword
+        currentUser.Save()
+
+        response.Success(c)
+    }
+}
+
+func (ctrl *UsersController) UpdateAvatar(c *gin.Context) {
+
+    request := requests.UserUpdateAvatarRequest{}
+    if ok := requests.Validate(c, &request, requests.UserUpdateAvatar); !ok {
+        return
+    }
+
+    avatar, err := file.SaveUploadAvatar(c, request.Avatar)
+    if err != nil {
+        response.Abort500(c, "上传头像失败，请稍后尝试~")
+        return
+    }
+
+    currentUser := auth.CurrentUser(c)
+    currentUser.Avatar = config.GetString("app.url") + avatar
+    currentUser.Save()
+
+    response.Data(c, currentUser)
 }
