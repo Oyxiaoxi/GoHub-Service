@@ -1,11 +1,13 @@
 package middlewares
 
 import (
+	"net/http"
+
 	"GoHub-Service/pkg/app"
+	"GoHub-Service/pkg/config"
 	"GoHub-Service/pkg/limiter"
 	"GoHub-Service/pkg/logger"
 	"GoHub-Service/pkg/response"
-	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/cast"
@@ -31,7 +33,7 @@ type LimitConfig struct {
 func LimitIP(limit string) gin.HandlerFunc {
 	return LimitIPWithConfig(LimitConfig{
 		Rate:          limit,
-		Message:       "请求过于频繁，请稍后再试",
+		Message:       config.GetString("limiter.default_message", "请求过于频繁，请稍后再试"),
 		ShowRemaining: true,
 	})
 }
@@ -56,7 +58,7 @@ func LimitIPWithConfig(config LimitConfig) gin.HandlerFunc {
 func LimitPerRoute(limit string) gin.HandlerFunc {
 	return LimitPerRouteWithConfig(LimitConfig{
 		Rate:          limit,
-		Message:       "该操作过于频繁，请稍后再试",
+		Message:       config.GetString("limiter.default_message", "请求过于频繁，请稍后再试"),
 		ShowRemaining: true,
 	})
 }
@@ -85,7 +87,7 @@ func LimitPerRouteWithConfig(config LimitConfig) gin.HandlerFunc {
 func LimitByUser(limit string) gin.HandlerFunc {
 	return LimitByUserWithConfig(LimitConfig{
 		Rate:          limit,
-		Message:       "操作过于频繁，请稍后再试",
+		Message:       config.GetString("limiter.default_message", "请求过于频繁，请稍后再试"),
 		ShowRemaining: true,
 	})
 }
@@ -120,7 +122,7 @@ func LimitByUserWithConfig(config LimitConfig) gin.HandlerFunc {
 func limitHandler(c *gin.Context, key string, limit string) bool {
 	return limitHandlerWithConfig(c, key, LimitConfig{
 		Rate:          limit,
-		Message:       "请求过于频繁，请稍后再试",
+		Message:       config.GetString("limiter.default_message", "请求过于频繁，请稍后再试"),
 		ShowRemaining: true,
 	})
 }

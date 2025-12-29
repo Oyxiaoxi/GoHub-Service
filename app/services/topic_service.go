@@ -13,7 +13,7 @@ import (
 )
 
 // TopicService Topic服务
-type TopicService struct{
+type TopicService struct {
 	repo  repositories.TopicRepository
 	cache *cache.TopicCache
 }
@@ -90,36 +90,44 @@ func (s *TopicService) toResponseDTOList(topics []topic.Topic) []TopicResponseDT
 
 // GetByID 根据ID获取话题
 func (s *TopicService) GetByID(id string) (*TopicResponseDTO, *apperrors.AppError) {
-	topicModel, err := s.cache.GetByID(id)
-	if err == nil && topicModel != nil {
-		return s.toResponseDTO(topicModel), nil
+	if s.cache != nil {
+		topicModel, err := s.cache.GetByID(id)
+		if err == nil && topicModel != nil {
+			return s.toResponseDTO(topicModel), nil
+		}
 	}
-	topicModel, err = s.repo.GetByID(id)
+
+	topicModel, err := s.repo.GetByID(id)
 	if err != nil {
 		return nil, apperrors.WrapError(err, "获取话题失败")
 	}
 	if topicModel == nil {
 		return nil, apperrors.NotFoundError("话题").WithDetails(map[string]interface{}{"topic_id": id})
 	}
-	s.cache.Set(topicModel)
+	if s.cache != nil {
+		s.cache.Set(topicModel)
+	}
 	return s.toResponseDTO(topicModel), nil
 }
 
 // List 获取话题列表
 func (s *TopicService) List(c *gin.Context, perPage int) (*TopicListResponseDTO, *apperrors.AppError) {
-	topics, found := s.cache.GetList(c)
-	if found && len(topics) > 0 {
-		data, pager, _ := s.repo.List(c, perPage)
-		return &TopicListResponseDTO{
-			Topics: s.toResponseDTOList(data),
-			Paging: pager,
-		}, nil
+	if s.cache != nil {
+		topics, found := s.cache.GetList(c)
+		if found && len(topics) > 0 {
+			data, pager, _ := s.repo.List(c, perPage)
+			return &TopicListResponseDTO{
+				Topics: s.toResponseDTOList(data),
+				Paging: pager,
+			}, nil
+		}
 	}
+
 	data, pager, err := s.repo.List(c, perPage)
 	if err != nil {
 		return nil, apperrors.WrapError(err, "获取话题列表失败")
 	}
-	if len(data) > 0 {
+	if len(data) > 0 && s.cache != nil {
 		s.cache.SetList(c, data)
 	}
 	return &TopicListResponseDTO{
@@ -139,7 +147,9 @@ func (s *TopicService) Create(dto TopicCreateDTO) (*TopicResponseDTO, *apperrors
 	if err := s.repo.Create(topicModel); err != nil {
 		return nil, apperrors.WrapError(err, "创建话题失败")
 	}
-	s.cache.ClearList()
+	if s.cache != nil {
+		s.cache.ClearList()
+	}
 	return s.toResponseDTO(topicModel), nil
 }
 
@@ -164,8 +174,10 @@ func (s *TopicService) Update(id string, dto TopicUpdateDTO) (*TopicResponseDTO,
 	if err := s.repo.Update(topicModel); err != nil {
 		return nil, apperrors.WrapError(err, "更新话题失败")
 	}
-	s.cache.Delete(id)
-	s.cache.ClearList()
+	if s.cache != nil {
+		s.cache.Delete(id)
+		s.cache.ClearList()
+	}
 	return s.toResponseDTO(topicModel), nil
 }
 
@@ -175,8 +187,10 @@ func (s *TopicService) Delete(id string) *apperrors.AppError {
 	if err != nil {
 		return apperrors.WrapError(err, "删除话题失败")
 	}
-	s.cache.Delete(id)
-	s.cache.ClearList()
+	if s.cache != nil {
+		s.cache.Delete(id)
+		s.cache.ClearList()
+	}
 	return nil
 }
 
@@ -188,4 +202,3 @@ func (s *TopicService) CheckOwnership(topicID, userID string) (bool, *apperrors.
 	}
 	return topicModel.UserID == userID, nil
 }
-

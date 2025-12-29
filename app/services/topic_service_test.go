@@ -1,10 +1,14 @@
 package services
 
 import (
+	"fmt"
 	"testing"
 
+	"GoHub-Service/app/models"
 	"GoHub-Service/app/models/topic"
-	"GoHub-Service/app/repositories"
+	"GoHub-Service/pkg/paginator"
+
+	"github.com/gin-gonic/gin"
 )
 
 // MockTopicRepository 模拟 TopicRepository
@@ -25,13 +29,17 @@ func (m *MockTopicRepository) GetByID(id string) (*topic.Topic, error) {
 	return nil, nil
 }
 
-func (m *MockTopicRepository) List(c interface{}, perPage int) ([]topic.Topic, interface{}, error) {
-	return nil, nil, nil
+func (m *MockTopicRepository) List(c *gin.Context, perPage int) ([]topic.Topic, *paginator.Paging, error) {
+	return []topic.Topic{}, &paginator.Paging{}, nil
 }
 
 func (m *MockTopicRepository) Create(t *topic.Topic) error {
-	t.ID = 1
-	m.topics["1"] = t
+	if t == nil {
+		return fmt.Errorf("topic is nil")
+	}
+	id := fmt.Sprintf("%d", len(m.topics)+1)
+	t.ID = uint64(len(m.topics) + 1)
+	m.topics[id] = t
 	return nil
 }
 
@@ -41,6 +49,20 @@ func (m *MockTopicRepository) Update(t *topic.Topic) error {
 
 func (m *MockTopicRepository) Delete(id string) error {
 	delete(m.topics, id)
+	return nil
+}
+
+func (m *MockTopicRepository) BatchCreate(topics []topic.Topic) error {
+	for i := range topics {
+		_ = m.Create(&topics[i])
+	}
+	return nil
+}
+
+func (m *MockTopicRepository) BatchDelete(ids []string) error {
+	for _, id := range ids {
+		delete(m.topics, id)
+	}
 	return nil
 }
 
@@ -96,7 +118,7 @@ func TestTopicService_Create(t *testing.T) {
 		t.Errorf("Expected title %s, got %s", dto.Title, result.Title)
 	}
 
-	if result.ID == 0 {
+	if result.ID == "" {
 		t.Error("Expected ID to be set")
 	}
 }
@@ -110,9 +132,9 @@ func TestTopicService_CheckOwnership(t *testing.T) {
 
 	// 准备测试数据
 	testTopic := &topic.Topic{
-		ID:     1,
-		UserID: "user1",
-		Title:  "Test",
+		BaseModel: models.BaseModel{ID: 1},
+		UserID:    "user1",
+		Title:     "Test",
 	}
 	mockRepo.topics["1"] = testTopic
 

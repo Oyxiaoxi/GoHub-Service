@@ -45,8 +45,6 @@ package repository
 //        return s.userRepo.FindByID(id)
 //    }
 
-// BaseRepository 基础Repository结构（可选）
-type BaseRepository struct{}
 
 // PaginationParams 分页参数
 type PaginationParams struct {
