@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-// LinkService 友情链接服务
+// LinkService 提供友情链接查询的只读服务，主要走缓存避免频繁 DB 访问.
 type LinkService struct{}
 
 // NewLinkService 创建友情链接服务实例
@@ -55,7 +55,7 @@ func (s *LinkService) toResponseDTOList(links []link.Link) []LinkResponseDTO {
 	return dtos
 }
 
-// GetAllCached 获取所有缓存的友情链接
+// GetAllCached 仅从缓存拉取链接列表，缓存缺失时返回 NotFound 供上层决定回源或直接响应.
 func (s *LinkService) GetAllCached() (*LinkListResponseDTO, *apperrors.AppError) {
 	links := link.AllCached()
 	if links == nil {

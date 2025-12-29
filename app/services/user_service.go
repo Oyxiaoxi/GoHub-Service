@@ -1,4 +1,3 @@
-
 // Package services 用户业务逻辑服务
 package services
 
@@ -8,11 +7,11 @@ import (
 	apperrors "GoHub-Service/pkg/errors"
 	"GoHub-Service/pkg/paginator"
 	"fmt"
-	"time"
 	"github.com/gin-gonic/gin"
+	"time"
 )
 
-// UpdateProfile 更新当前用户信息
+// UpdateProfile 更新当前用户信息，并在成功时刷新缓存，确保后续读取不命中旧值.
 func (s *UserService) UpdateProfile(currentUser *user.User, name, city, introduction string) (*user.User, error) {
 	currentUser.Name = name
 	currentUser.City = city
@@ -26,12 +25,12 @@ func (s *UserService) UpdateProfile(currentUser *user.User, name, city, introduc
 	return nil, fmt.Errorf("用户信息更新失败")
 }
 
-// UserService 用户服务
-type UserService struct{
+// UserService 负责用户的读写操作及缓存一致性处理.
+type UserService struct {
 	repo repositories.UserRepository
 }
 
-// NewUserService 创建用户服务实例
+// NewUserService 构造用户服务，默认使用数据库+缓存仓储实现.
 func NewUserService() *UserService {
 	return &UserService{
 		repo: repositories.NewUserRepository(),
@@ -97,7 +96,7 @@ func (s *UserService) toResponseDTOList(users []user.User) []UserResponseDTO {
 	return dtos
 }
 
-// GetByID 根据ID获取用户
+// GetByID 获取单个用户，优先命中缓存，失败时返回包装后的业务错误.
 func (s *UserService) GetByID(id string) (*UserResponseDTO, *apperrors.AppError) {
 	u, err := s.repo.GetByID(id)
 	if err != nil {
@@ -106,7 +105,7 @@ func (s *UserService) GetByID(id string) (*UserResponseDTO, *apperrors.AppError)
 	return s.toResponseDTO(u), nil
 }
 
-// List 获取用户列表
+// List 分页获取用户列表并附带分页元信息.
 func (s *UserService) List(c *gin.Context, perPage int) (*UserListResponseDTO, *apperrors.AppError) {
 	users, paging, err := s.repo.List(c, perPage)
 	if err != nil {

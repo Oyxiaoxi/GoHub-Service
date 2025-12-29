@@ -11,12 +11,12 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// CategoryService 分类服务
-type CategoryService struct{
+// CategoryService 负责分类的读写和缓存穿透保护等业务流.
+type CategoryService struct {
 	repo repositories.CategoryRepository
 }
 
-// NewCategoryService 创建分类服务实例
+// NewCategoryService 构造分类服务，默认使用数据库+缓存仓储实现.
 func NewCategoryService() *CategoryService {
 	return &CategoryService{
 		repo: repositories.NewCategoryRepository(),
@@ -76,7 +76,7 @@ func (s *CategoryService) toResponseDTOList(categories []category.Category) []Ca
 	return dtos
 }
 
-// GetByID 根据ID获取分类
+// GetByID 拉取单条分类，包装仓储错误便于向上层透传.
 func (s *CategoryService) GetByID(id string) (*CategoryResponseDTO, error) {
 	c, err := s.repo.GetByID(id)
 	if err != nil {
@@ -85,7 +85,7 @@ func (s *CategoryService) GetByID(id string) (*CategoryResponseDTO, error) {
 	return s.toResponseDTO(c), nil
 }
 
-// List 获取分类列表
+// List 分页查询分类列表并返回分页信息.
 func (s *CategoryService) List(c *gin.Context, perPage int) (*CategoryListResponseDTO, error) {
 	categories, paging, err := s.repo.List(c, perPage)
 	if err != nil {
