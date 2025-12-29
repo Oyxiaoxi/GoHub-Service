@@ -60,38 +60,14 @@ func RegisterAPIRoutes(r *gin.Engine) {
 
     // 用户相关
     v1.GET("/user", middlewares.AuthJWT(), usersCtrl.CurrentUser)
-    usersGroup := v1.Group("/users")
-    {
-        usersGroup.GET("", usersCtrl.Index)
-        usersGroup.PUT("", middlewares.AuthJWT(), usersCtrl.UpdateProfile)
-        usersGroup.PUT("/email", middlewares.AuthJWT(), usersCtrl.UpdateEmail)
-        usersGroup.PUT("/phone", middlewares.AuthJWT(), usersCtrl.UpdatePhone)
-        usersGroup.PUT("/password", middlewares.AuthJWT(), usersCtrl.UpdatePassword)
-        usersGroup.PUT("/avatar", middlewares.AuthJWT(), usersCtrl.UpdateAvatar)
-    }
+    RegisterUserRoutes(v1, usersCtrl)
 
     // 分类相关
-    categoriesGroup := v1.Group("/categories")
-    {
-        categoriesGroup.GET("", categoriesCtrl.Index)
-        categoriesGroup.POST("", middlewares.AuthJWT(), categoriesCtrl.Store)
-        categoriesGroup.PUT(":id", middlewares.AuthJWT(), categoriesCtrl.Update)
-        categoriesGroup.DELETE(":id", middlewares.AuthJWT(), categoriesCtrl.Delete)
-    }
+    RegisterCategoryRoutes(v1, categoriesCtrl)
 
     // 话题相关
-    topicsGroup := v1.Group("/topics")
-    {
-        topicsGroup.GET("", topicsCtrl.Index)
-        topicsGroup.POST("", middlewares.AuthJWT(), topicsCtrl.Store)
-        topicsGroup.PUT(":id", middlewares.AuthJWT(), topicsCtrl.Update)
-        topicsGroup.DELETE(":id", middlewares.AuthJWT(), topicsCtrl.Delete)
-        topicsGroup.GET(":id", topicsCtrl.Show)
-    }
+    RegisterTopicRoutes(v1, topicsCtrl)
 
     // 友情链接
-    linksGroup := v1.Group("/links")
-    {
-        linksGroup.GET("", linksCtrl.Index)
-    }
+    RegisterLinkRoutes(v1, linksCtrl)
 }
