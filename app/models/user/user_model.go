@@ -17,8 +17,8 @@ type User struct {
     Introduction string `json:"introduction,omitempty"`
     Avatar        string `json:"avatar,omitempty"`
 
-    Email    string `json:"-"`
-    Phone    string `json:"-"`
+    Email    string `gorm:"uniqueIndex" json:"-"`
+    Phone    string `gorm:"uniqueIndex" json:"-"`
     Password string `json:"-"`
 
     models.CommonTimestampsField

@@ -14,8 +14,8 @@ import (
 type Link struct {
     models.BaseModel
 
-    Name string `json:"name,omitempty"`
-    URL  string `json:"url,omitempty"`
+    Name string `gorm:"index" json:"name,omitempty"`
+    URL  string `gorm:"index" json:"url,omitempty"`
 
     models.CommonTimestampsField
 }

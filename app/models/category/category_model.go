@@ -9,7 +9,7 @@ import (
 type Category struct {
     models.BaseModel
 
-    Name        string `json:"name,omitempty"`
+    Name        string `gorm:"index" json:"name,omitempty"`
     Description string `json:"description,omitempty"`
 
     models.CommonTimestampsField
