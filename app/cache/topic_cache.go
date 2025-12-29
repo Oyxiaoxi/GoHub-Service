@@ -17,11 +17,12 @@ type TopicCache struct {
 	cacheTime      time.Duration
 }
 
-// NewTopicCache 创建话题缓存实例
+// NewTopicCache 创建话题缓存实例，使用分级 TTL
 func NewTopicCache() *TopicCache {
+	tier := GetEntityTier("topic")
 	return &TopicCache{
 		cacheKeyPrefix: "topic:",
-		cacheTime:      30 * time.Minute,
+		cacheTime:      tier.TTL,
 	}
 }
 

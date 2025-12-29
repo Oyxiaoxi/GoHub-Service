@@ -2,6 +2,7 @@
 package repositories
 
 import (
+	"GoHub-Service/app/cache"
 	"GoHub-Service/app/models/user"
 	"GoHub-Service/pkg/database"
 	apperrors "GoHub-Service/pkg/errors"
@@ -53,11 +54,12 @@ func (r *userRepository) BatchDelete(ids []string) error {
 	})
 }
 
-// NewUserRepository 返回默认的用户仓储实现，带 30 分钟缓存 TTL.
+// NewUserRepository 返回默认的用户仓储实现，使用分级缓存策略.
 func NewUserRepository() UserRepository {
+	tier := cache.GetEntityTier("user")
 	return &userRepository{
-		cacheTTL:     1800,      // 30分钟
-		cacheKeyUser: "user:%s", // user:id
+		cacheTTL:     int(tier.TTL.Seconds()),
+		cacheKeyUser: "user:%s",
 	}
 }
 

@@ -2,6 +2,7 @@
 package repositories
 
 import (
+	"GoHub-Service/app/cache"
 	"GoHub-Service/app/models/category"
 	"GoHub-Service/pkg/database"
 	apperrors "GoHub-Service/pkg/errors"
@@ -37,10 +38,11 @@ type categoryRepository struct {
 	cacheKeyList     string
 }
 
-// NewCategoryRepository 返回默认的分类仓储实现，带基础缓存配置.
+// NewCategoryRepository 返回默认的分类仓储实现，使用分级缓存策略.
 func NewCategoryRepository() CategoryRepository {
+	tier := cache.GetEntityTier("category")
 	return &categoryRepository{
-		cacheTTL:         7200,
+		cacheTTL:         int(tier.TTL.Seconds()),
 		cacheKeyCategory: "category:%s",
 		cacheKeyList:     "category:list",
 	}

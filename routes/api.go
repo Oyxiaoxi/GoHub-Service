@@ -5,6 +5,7 @@ import (
 	"GoHub-Service/app/http/controllers/api/v1/auth"
 	"GoHub-Service/app/http/middlewares"
 	"GoHub-Service/pkg/config"
+	"GoHub-Service/pkg/metrics"
 
 	controllers "GoHub-Service/app/http/controllers/api/v1"
 
@@ -12,8 +13,10 @@ import (
 )
 
 // RegisterAPIRoutes 注册 API 相关路由
-
 func RegisterAPIRoutes(r *gin.Engine) {
+
+	// Prometheus 指标端点
+	r.GET("/metrics", metrics.Handler())
 
 	// 测试一个 v1 的路由组，我们所有的 v1 版本的路由都将存放到这里
 	var v1 *gin.RouterGroup
