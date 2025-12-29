@@ -28,7 +28,7 @@ func registerGlobalMiddleWare(router *gin.Engine) {
     router.Use(
         middlewares.Logger(),
         middlewares.Recovery(),
-        middlewares.ForceUA(),
+        middlewares.ForceUA(),              // 强制请求必须附带 User-Agent 标头
         middlewares.CORS(),                 // CORS 跨域配置
         middlewares.SecureHeaders(),        // 安全响应头
         middlewares.XSSProtection(),        // XSS 防护
