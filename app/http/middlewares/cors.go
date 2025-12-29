@@ -1,7 +1,10 @@
 package middlewares
 
 import (
+	"strings"
 	"time"
+
+	"GoHub-Service/pkg/config"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -10,17 +13,8 @@ import (
 // CORS 配置跨域资源共享中间件
 func CORS() gin.HandlerFunc {
 	return cors.New(cors.Config{
-		// 允许的源列表
-		AllowOrigins: []string{
-			"http://localhost:3000",
-			"http://localhost:3001",
-			"http://localhost:8080",
-			"http://127.0.0.1:3000",
-			"http://127.0.0.1:3001",
-			"http://127.0.0.1:8080",
-			// 生产环境需要配置具体域名
-			// "https://yourdomain.com",
-		},
+		// 允许的源列表（从配置读取，逗号分隔）
+		AllowOrigins: getAllowedOrigins(),
 
 		// 允许的 HTTP 方法
 		AllowMethods: []string{
@@ -92,4 +86,18 @@ func CORSWithOrigins(origins []string) gin.HandlerFunc {
 		AllowCredentials: true,
 		MaxAge:           12 * time.Hour,
 	})
+}
+
+// getAllowedOrigins 从配置读取 CORS 允许的域名，使用逗号分隔
+func getAllowedOrigins() []string {
+	raw := config.GetString("cors.allowed_origins")
+	parts := strings.Split(raw, ",")
+	result := make([]string, 0, len(parts))
+	for _, p := range parts {
+		trimmed := strings.TrimSpace(p)
+		if trimmed != "" {
+			result = append(result, trimmed)
+		}
+	}
+	return result
 }
