@@ -20,15 +20,40 @@ type CategoryRepository interface {
 	Create(category *category.Category) error
 	Update(category *category.Category) error
 	Delete(id string) error
-	
+	BatchCreate(categories []category.Category) error
+	BatchDelete(ids []string) error
 	// 缓存方法
 	GetAllCached() ([]category.Category, error)
 	SetListCache(categories []category.Category) error
 	FlushCache() error
+import (
+	"GoHub-Service/pkg/database"
+	"gorm.io/gorm"
+)
 }
 
 // categoryRepository Category仓储实现
 type categoryRepository struct {
+
+	// BatchCreate 批量创建分类（事务包裹）
+	func (r *categoryRepository) BatchCreate(categories []category.Category) error {
+		return database.DB.Transaction(func(tx *gorm.DB) error {
+			if err := tx.Create(&categories).Error; err != nil {
+				return err
+			}
+			return nil
+		})
+	}
+
+	// BatchDelete 批量删除分类（事务包裹）
+	func (r *categoryRepository) BatchDelete(ids []string) error {
+		return database.DB.Transaction(func(tx *gorm.DB) error {
+			if err := tx.Where("id IN ?", ids).Delete(&category.Category{}).Error; err != nil {
+				return err
+			}
+			return nil
+		})
+	}
 	cacheTTL         int
 	cacheKeyCategory string
 	cacheKeyList     string

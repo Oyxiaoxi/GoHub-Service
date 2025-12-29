@@ -15,10 +15,36 @@ type TopicRepository interface {
 	Create(topic *topic.Topic) error
 	Update(topic *topic.Topic) error
 	Delete(id string) error
+	BatchCreate(topics []topic.Topic) error
+	BatchDelete(ids []string) error
+import (
+	"GoHub-Service/pkg/database"
+	"gorm.io/gorm"
+)
 }
 
 // topicRepository 话题仓储实现
 type topicRepository struct{}
+
+// BatchCreate 批量创建话题（事务包裹）
+func (r *topicRepository) BatchCreate(topics []topic.Topic) error {
+	return database.DB.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Create(&topics).Error; err != nil {
+			return err
+		}
+		return nil
+	})
+}
+
+// BatchDelete 批量删除话题（事务包裹）
+func (r *topicRepository) BatchDelete(ids []string) error {
+	return database.DB.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Where("id IN ?", ids).Delete(&topic.Topic{}).Error; err != nil {
+			return err
+		}
+		return nil
+	})
+}
 
 // NewTopicRepository 创建话题仓储实例
 func NewTopicRepository() TopicRepository {

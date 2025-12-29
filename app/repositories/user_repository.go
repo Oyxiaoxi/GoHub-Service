@@ -17,15 +17,40 @@ import (
 type UserRepository interface {
 	GetByID(id string) (*user.User, error)
 	List(c *gin.Context, perPage int) ([]user.User, *paginator.Paging, error)
-	
+	BatchCreate(users []user.User) error
+	BatchDelete(ids []string) error
 	// 缓存方法
 	GetFromCache(id string) (*user.User, error)
 	SetCache(user *user.User) error
 	DeleteCache(id string) error
+import (
+	"GoHub-Service/pkg/database"
+	"gorm.io/gorm"
+)
 }
 
 // userRepository User仓储实现
 type userRepository struct {
+
+	// BatchCreate 批量创建用户（事务包裹）
+	func (r *userRepository) BatchCreate(users []user.User) error {
+		return database.DB.Transaction(func(tx *gorm.DB) error {
+			if err := tx.Create(&users).Error; err != nil {
+				return err
+			}
+			return nil
+		})
+	}
+
+	// BatchDelete 批量删除用户（事务包裹）
+	func (r *userRepository) BatchDelete(ids []string) error {
+		return database.DB.Transaction(func(tx *gorm.DB) error {
+			if err := tx.Where("id IN ?", ids).Delete(&user.User{}).Error; err != nil {
+				return err
+			}
+			return nil
+		})
+	}
 	cacheTTL     int
 	cacheKeyUser string
 }
