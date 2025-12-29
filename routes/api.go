@@ -14,7 +14,6 @@ import (
 
 // RegisterAPIRoutes 注册 API 相关路由
 func RegisterAPIRoutes(r *gin.Engine) {
-
 	// Prometheus 指标端点
 	r.GET("/metrics", metrics.Handler())
 
