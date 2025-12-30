@@ -89,7 +89,80 @@ func SaveUploadAvatar(c *gin.Context, file *multipart.FileHeader) (string, error
 	}
 	resizedAvatar := imaging.Thumbnail(img, 256, 256, imaging.Lanczos)
 	finalPath := filepath.Join(dirPath, finalName)
-	if err := imaging.Save(resizedAvatar, finalPath); err != nil {
+	options := buildJPEGOptions(strings.TrimPrefix(ext, "."))
+	if err := imaging.Save(resizedAvatar, finalPath, options...); err != nil {
+		return "", err
+	}
+
+	if err := os.Remove(tmpPath); err != nil {
+		return "", err
+	}
+
+	publicPath := "/" + path.Join(strings.TrimPrefix(publicPrefix, "/"), biz, dateParts[0], dateParts[1], dateParts[2], userID, finalName)
+	return publicPath, nil
+}
+
+// SaveUploadImage 通用图片上传，按业务目录存储并可选缩放压缩
+func SaveUploadImage(c *gin.Context, file *multipart.FileHeader, biz string, maxWidth int) (string, error) {
+	if file == nil {
+		return "", errors.New("image file is empty")
+	}
+
+	if err := validateUpload(file); err != nil {
+		return "", err
+	}
+
+	if biz == "" {
+		biz = "images"
+	}
+
+	if maxWidth <= 0 {
+		maxWidth = config.GetInt("storage.max_image_width", 1600)
+	}
+
+	datePath := app.TimenowInTimezone().Format("2006/01/02")
+	dateParts := strings.Split(datePath, "/")
+
+	basePath := strings.TrimRight(config.GetString("storage.base_path", "public/uploads"), "/")
+	if basePath == "" {
+		basePath = "public/uploads"
+	}
+	publicPrefix := config.GetString("storage.public_prefix", "/uploads")
+
+	userID := auth.CurrentUID(c)
+	dirPath := filepath.Join(basePath, biz, dateParts[0], dateParts[1], dateParts[2], userID)
+	if err := os.MkdirAll(dirPath, 0755); err != nil {
+		return "", err
+	}
+
+	ext := strings.ToLower(filepath.Ext(file.Filename))
+	fileHash, err := fileHash8(file)
+	if err != nil {
+		return "", err
+	}
+
+	finalName := buildUploadFileName(biz, ext, fileHash)
+	tmpName := "raw-" + finalName
+	tmpPath := filepath.Join(dirPath, tmpName)
+	finalPath := filepath.Join(dirPath, finalName)
+
+	if err := c.SaveUploadedFile(file, tmpPath); err != nil {
+		return "", err
+	}
+
+	img, err := imaging.Open(tmpPath, imaging.AutoOrientation(true))
+	if err != nil {
+		return "", err
+	}
+
+	processed := img
+	if maxWidth > 0 && img.Bounds().Dx() > maxWidth {
+		processed = imaging.Resize(img, maxWidth, 0, imaging.Lanczos)
+	}
+
+	options := buildJPEGOptions(strings.TrimPrefix(ext, "."))
+
+	if err := imaging.Save(processed, finalPath, options...); err != nil {
 		return "", err
 	}
 
@@ -116,6 +189,22 @@ func validateUpload(file *multipart.FileHeader) error {
 	ext := strings.TrimPrefix(strings.ToLower(filepath.Ext(file.Filename)), ".")
 	if _, ok := allowed[ext]; !ok {
 		return fmt.Errorf("file type %s is not allowed", ext)
+	}
+
+	return nil
+}
+
+func buildJPEGOptions(ext string) []imaging.EncodeOption {
+	jQuality := config.GetInt("storage.jpeg_quality", 85)
+	if jQuality < 1 {
+		jQuality = 1
+	}
+	if jQuality > 100 {
+		jQuality = 100
+	}
+
+	if ext == "jpg" || ext == "jpeg" {
+		return []imaging.EncodeOption{imaging.JPEGQuality(jQuality)}
 	}
 
 	return nil

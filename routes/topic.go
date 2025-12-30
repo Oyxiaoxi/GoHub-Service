@@ -13,6 +13,7 @@ func RegisterTopicRoutes(rg *gin.RouterGroup, topicsCtrl *v1.TopicsController) {
 	{
 		topicsGroup.GET("", topicsCtrl.Index)
 		topicsGroup.POST("", middlewares.AuthJWT(), topicsCtrl.Store)
+		topicsGroup.POST("/upload-image", middlewares.AuthJWT(), topicsCtrl.UploadImage)
 		topicsGroup.PUT(":id", middlewares.AuthJWT(), topicsCtrl.Update)
 		topicsGroup.DELETE(":id", middlewares.AuthJWT(), topicsCtrl.Delete)
 		topicsGroup.GET(":id", topicsCtrl.Show)

@@ -42,6 +42,9 @@ func RegisterAPIRoutes(r *gin.Engine) {
 	commentsCtrl := controllers.NewCommentsController()
 	notificationsCtrl := controllers.NewNotificationsController()
 
+	// 搜索相关
+	RegisterSearchRoutes(v1)
+
 	// Auth 路由组
 	authGroup := v1.Group("/auth", middlewares.LimitIP(config.GetString("limiter.auth_ip_rate", "1000-H")))
 	{

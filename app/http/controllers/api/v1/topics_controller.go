@@ -4,7 +4,9 @@ import (
 	"GoHub-Service/app/requests"
 	"GoHub-Service/app/services"
 	"GoHub-Service/pkg/auth"
+	"GoHub-Service/pkg/config"
 	apperrors "GoHub-Service/pkg/errors"
+	"GoHub-Service/pkg/file"
 	"GoHub-Service/pkg/logger"
 	"GoHub-Service/pkg/response"
 
@@ -323,4 +325,25 @@ func (ctrl *TopicsController) AddView(c *gin.Context) {
 		return
 	}
 	response.Success(c)
+}
+
+// UploadImage 上传话题配图
+func (ctrl *TopicsController) UploadImage(c *gin.Context) {
+	request := requests.TopicImageUploadRequest{}
+	if ok := requests.Validate(c, &request, requests.TopicImageUpload); !ok {
+		return
+	}
+
+	maxWidth := config.GetInt("storage.max_image_width", 1600)
+	imagePath, err := file.SaveUploadImage(c, request.Image, "topic-images", maxWidth)
+	if err != nil {
+		logger.LogErrorWithContext(c, err, "上传话题图片失败")
+		response.Abort500(c, "上传图片失败，请稍后再试")
+		return
+	}
+
+	response.JSON(c, gin.H{
+		"path": imagePath,
+		"url":  config.GetString("app.url") + imagePath,
+	})
 }
