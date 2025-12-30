@@ -9,6 +9,11 @@ func Initialize() {
 
     // 指定优先于同目录下的其他文件运行
     seed.SetRunOrder([]string{
+        // 顺序需满足外键依赖：用户 -> 分类 -> 话题 -> 评论 -> 友情链接
         "SeedUsersTable",
+        "SeedCategoriesTable",
+        "SeedTopicsTable",
+        "SeedCommentsTable",
+        "SeedLinksTable",
     })
 }
