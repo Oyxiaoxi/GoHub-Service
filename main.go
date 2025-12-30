@@ -27,12 +27,6 @@ func main() {
 			// 配置初始化，依赖命令行 --env 参数
 			config.InitConfig(cmd.Env)
 
-			// 初始化 Swagger 元信息（Host/BasePath 等来源于配置）
-			bootstrap.SetupSwaggerDocs()
-
-			// 初始化 Logger
-			bootstrap.SetupLogger()
-
 			// 初始化数据库
 			bootstrap.SetupDB()
 

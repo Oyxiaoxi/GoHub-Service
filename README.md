@@ -117,7 +117,6 @@ storage/        # 日志与临时文件
 
 ## 开发提示
 
-- Swagger：启动后访问 `http://localhost:3000/swagger/index.html`
 - 限流/CORS：通过 config/limiter.go 与 config/cors.go 的 env 配置启用/调优
 - Redis 缓存：服务层优先读缓存，写操作会刷新相关键；确保 Redis 可用
 - 日志：Zap + Lumberjack，默认输出到 `storage/logs`
