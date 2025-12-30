@@ -64,6 +64,13 @@ go run main.go migrate up
 go run main.go seed
 ```
 
+种子数据概览（本地体验用）：
+- 用户：30 个（高/中/低活跃度，随机城市、简介、头像、积分、粉丝数）
+- 分类：6 个精选主题（Tech / AI / Career / Life / Product / Ops）
+- 话题：40 个随机标题与正文，带浏览/点赞/收藏计数
+- 评论：120 顶层 + 25 回复，回复指向真实父评论
+- 备注：`SeedInteractions` / `SeedMessages` 占位在运行顺序中，如未实现请从 `database/seeders/seeder.go` 暂时移除或补充对应 seeder
+
 4) 启动服务
 
 ```bash
@@ -78,6 +85,14 @@ go run main.go serve        # 等同直接 go run main.go
 - 数据填充：`go run main.go seed` (或指定 seeder 名称)
 - 生成代码脚手架：`go run main.go make --help`
 - 运行测试：`go test ./...`
+
+## 开发流程速览
+
+- 安装依赖并启动 MySQL/Redis；复制 `.env`，填好数据库、Redis、JWT/APP_KEY
+- 执行迁移与种子（如需体验数据）；未实现的 seeder 需从运行顺序移除或补齐
+- 本地运行：`go run main.go serve`（或使用 `make` 脚手架生成命令）
+- 测试：`go test ./...`（建议在修改仓储/服务逻辑后运行）
+- 日志：默认输出到 `storage/logs`，可在 `config/log.go` 调整级别与轮转策略
 
 ## 项目结构
 
@@ -94,13 +109,11 @@ storage/        # 日志与临时文件
 
 ## 文档与指南
 
-- 代码规范：[CODING_STANDARDS.md](CODING_STANDARDS.md)
-- 控制器复用指南：[CONTROLLER_REUSE_GUIDE.md](CONTROLLER_REUSE_GUIDE.md)
+- 开发者指南：[docs/DEVELOPMENT_GUIDE.md](docs/DEVELOPMENT_GUIDE.md)
 - 服务层架构：[docs/SERVICE_LAYER_GUIDE.md](docs/SERVICE_LAYER_GUIDE.md)
 - DTO 设计与实现：[docs/DTO_GUIDE.md](docs/DTO_GUIDE.md) | [docs/DTO_IMPLEMENTATION_SUMMARY.md](docs/DTO_IMPLEMENTATION_SUMMARY.md)
 - 安全与限流：[docs/API_SECURITY.md](docs/API_SECURITY.md)
 - 日志与性能：[docs/LOGGING_GUIDE.md](docs/LOGGING_GUIDE.md) | [docs/PERFORMANCE_OPTIMIZATION.md](docs/PERFORMANCE_OPTIMIZATION.md)
-- 优化计划进展：[OPTIMIZATION_PLAN.md](OPTIMIZATION_PLAN.md)
 
 ## 开发提示
 
@@ -108,8 +121,6 @@ storage/        # 日志与临时文件
 - 限流/CORS：通过 config/limiter.go 与 config/cors.go 的 env 配置启用/调优
 - Redis 缓存：服务层优先读缓存，写操作会刷新相关键；确保 Redis 可用
 - 日志：Zap + Lumberjack，默认输出到 `storage/logs`
-
 ## License
 
 MIT
-- `POST /v1/auth/verify-codes/phone` - 发送手机验证码

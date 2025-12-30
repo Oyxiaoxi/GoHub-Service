@@ -291,11 +291,11 @@ type ListResponseDTO struct {
    - 测试指南
 
 ### 更新的文档
-1. **OPTIMIZATION_PLAN.md**
-   - 标记DTO层完善为已完成 ✅
-   - 更新完成度：85% -> 87%
-   - 新增版本v1.5记录
-   - 添加DTO_GUIDE.md到相关文档列表
+1. **PERFORMANCE_OPTIMIZATION.md**
+    - 标记DTO层完善为已完成 ✅
+    - 更新完成度：85% -> 87%
+    - 新增版本v1.5记录
+    - 添加DTO_GUIDE.md到相关文档列表
 
 ## 后续建议
 

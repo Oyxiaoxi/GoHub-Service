@@ -221,6 +221,48 @@ func (ctrl *UserController) Create(c *gin.Context) {
 }
 ```
 
+## 8. 落地示例：Topic 创建流程
+
+1) Controller 校验并绑定请求 → 构造 `TopicCreateDTO`
+```go
+var req requests.TopicRequest
+if !requests.Validate(c, &req, requests.TopicSave) { return }
+dto := services.TopicCreateDTO{
+    Title: req.Title,
+    Body: req.Body,
+    CategoryID: req.CategoryID,
+    UserID: auth.CurrentUID(c),
+}
+topicResp, err := topicService.Create(dto)
+if err != nil { response.Abort500(c); return }
+response.Created(c, topicResp)
+```
+
+2) Service 将 DTO 转模型并返回响应 DTO
+```go
+func (s *TopicService) Create(dto TopicCreateDTO) (*TopicResponseDTO, error) {
+    model := topic.Topic{Title: dto.Title, Body: dto.Body, CategoryID: dto.CategoryID, UserID: dto.UserID}
+    if err := s.repo.Create(&model); err != nil {
+        return nil, err
+    }
+    return s.toResponseDTO(&model), nil
+}
+```
+
+3) Response DTO 组合关联信息（分类/用户）
+```go
+type TopicResponseDTO struct {
+    ID        string            `json:"id"`
+    Title     string            `json:"title"`
+    Body      string            `json:"body"`
+    Category  CategoryResponseDTO `json:"category"`
+    User      UserResponseDTO     `json:"user"`
+    CreatedAt time.Time         `json:"created_at"`
+}
+```
+
+提示：列表 DTO（含分页）建议携带 `paginator.Paging`，避免在 Controller 拼装。
+
 ## 8. 测试DTO
 
 ```go
@@ -263,5 +305,5 @@ func TestUserCreateDTO(t *testing.T) {
 ## 10. 相关文档
 
 - [Service层架构指南](SERVICE_LAYER_GUIDE.md)
-- [Controller复用指南](../CONTROLLER_REUSE_GUIDE.md)
-- [代码规范](../CODING_STANDARDS.md)
+- [性能优化指南](PERFORMANCE_OPTIMIZATION.md)
+- [开发者指南](DEVELOPMENT_GUIDE.md)

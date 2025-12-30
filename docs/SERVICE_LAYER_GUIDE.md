@@ -398,6 +398,35 @@ func (ctrl *TopicsController) Update(c *gin.Context) {
 ❌ **不应该做**：
 - 处理 HTTP 请求和响应
 - 访问 gin.Context
+
+## 事务与缓存示例
+
+多步骤写操作请在 Service 层使用事务，同时在成功后刷新缓存：
+
+```go
+func (s *TopicService) CreateWithCache(dto TopicCreateDTO) (*topic.Topic, error) {
+    var created topic.Topic
+    err := database.DB.Transaction(func(tx *gorm.DB) error {
+        t := topic.Topic{Title: dto.Title, Body: dto.Body, CategoryID: dto.CategoryID, UserID: dto.UserID}
+        if err := tx.Create(&t).Error; err != nil {
+            return err
+        }
+        created = t
+        return nil
+    })
+    if err != nil {
+        return nil, apperrors.DatabaseError("创建话题失败", nil, err)
+    }
+
+    // 写操作完成后刷新缓存
+    cache.TopicStore(created.GetStringID(), created)
+    return &created, nil
+}
+```
+
+提示：
+- 不要在 Service 中持有 gin.Context；必要上下文通过参数传入（如 userID、locale）。
+- 将 DTO → Model 转换、缓存刷新、错误包装都集中在 Service，Controller 仅做绑定与响应。
 - 直接返回 HTTP 状态码
 - 处理表单验证（应在 Controller 层）
 
