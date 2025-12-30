@@ -83,4 +83,7 @@ func RegisterAPIRoutes(r *gin.Engine) {
 
 	// 通知相关
 	RegisterNotificationRoutes(v1, notificationsCtrl)
+
+	// 私信相关
+	RegisterMessageRoutes(v1)
 }
