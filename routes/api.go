@@ -40,6 +40,7 @@ func RegisterAPIRoutes(r *gin.Engine) {
 	topicsCtrl := controllers.NewTopicsController()
 	linksCtrl := controllers.NewLinksController()
 	commentsCtrl := controllers.NewCommentsController()
+	notificationsCtrl := controllers.NewNotificationsController()
 
 	// Auth 路由组
 	authGroup := v1.Group("/auth", middlewares.LimitIP(config.GetString("limiter.auth_ip_rate", "1000-H")))
@@ -76,4 +77,7 @@ func RegisterAPIRoutes(r *gin.Engine) {
 
 	// 评论相关
 	RegisterCommentRoutes(v1, commentsCtrl)
+
+	// 通知相关
+	RegisterNotificationRoutes(v1, notificationsCtrl)
 }

@@ -11,6 +11,7 @@ type InteractionService struct {
 	repo      repositories.InteractionRepository
 	topicRepo repositories.TopicRepository
 	userRepo  repositories.UserRepository
+	notifSvc  *NotificationService
 }
 
 // NewInteractionService 创建互动服务实例
@@ -19,15 +20,23 @@ func NewInteractionService() *InteractionService {
 		repo:      repositories.NewInteractionRepository(),
 		topicRepo: repositories.NewTopicRepository(),
 		userRepo:  repositories.NewUserRepository(),
+		notifSvc:  NewNotificationService(),
 	}
 }
 
 func (s *InteractionService) LikeTopic(userID, topicID string) *apperrors.AppError {
-	if _, err := s.topicRepo.GetByID(topicID); err != nil {
+	topicModel, err := s.topicRepo.GetByID(topicID)
+	if err != nil {
 		return apperrors.WrapError(err, "获取话题失败")
+	}
+	if topicModel == nil {
+		return apperrors.NotFoundError("话题")
 	}
 	if err := s.repo.LikeTopic(userID, topicID); err != nil {
 		return apperrors.WrapError(err, "点赞话题失败")
+	}
+	if s.notifSvc != nil && topicModel.UserID != "" && topicModel.UserID != userID {
+		_ = s.notifSvc.Notify(topicModel.UserID, userID, "topic_like", map[string]interface{}{"topic_id": topicID})
 	}
 	return nil
 }
@@ -43,11 +52,18 @@ func (s *InteractionService) UnlikeTopic(userID, topicID string) *apperrors.AppE
 }
 
 func (s *InteractionService) FavoriteTopic(userID, topicID string) *apperrors.AppError {
-	if _, err := s.topicRepo.GetByID(topicID); err != nil {
+	topicModel, err := s.topicRepo.GetByID(topicID)
+	if err != nil {
 		return apperrors.WrapError(err, "获取话题失败")
+	}
+	if topicModel == nil {
+		return apperrors.NotFoundError("话题")
 	}
 	if err := s.repo.FavoriteTopic(userID, topicID); err != nil {
 		return apperrors.WrapError(err, "收藏话题失败")
+	}
+	if s.notifSvc != nil && topicModel.UserID != "" && topicModel.UserID != userID {
+		_ = s.notifSvc.Notify(topicModel.UserID, userID, "topic_favorite", map[string]interface{}{"topic_id": topicID})
 	}
 	return nil
 }
@@ -71,6 +87,9 @@ func (s *InteractionService) FollowUser(followerID, followeeID string) *apperror
 			return apperrors.ValidationError("不能关注自己", map[string]interface{}{"user_id": followeeID})
 		}
 		return apperrors.WrapError(err, "关注用户失败")
+	}
+	if s.notifSvc != nil && followeeID != followerID {
+		_ = s.notifSvc.Notify(followeeID, followerID, "user_follow", map[string]interface{}{"user_id": followerID})
 	}
 	return nil
 }

@@ -14,15 +14,19 @@ import (
 
 // CommentService 评论服务
 type CommentService struct {
-	repo  repositories.CommentRepository
-	cache *cache.CommentCache
+	repo      repositories.CommentRepository
+	cache     *cache.CommentCache
+	notifSvc  *NotificationService
+	topicRepo repositories.TopicRepository
 }
 
 // NewCommentService 创建评论服务实例
 func NewCommentService() *CommentService {
 	return &CommentService{
-		repo:  repositories.NewCommentRepository(),
-		cache: cache.NewCommentCache(),
+		repo:      repositories.NewCommentRepository(),
+		cache:     cache.NewCommentCache(),
+		notifSvc:  NewNotificationService(),
+		topicRepo: repositories.NewTopicRepository(),
 	}
 }
 
@@ -195,6 +199,24 @@ func (s *CommentService) Create(dto *CommentCreateDTO) (*CommentResponseDTO, *ap
 	// 保存到数据库
 	if err := s.repo.Create(commentModel); err != nil {
 		return nil, apperrors.DatabaseError("创建评论", err)
+	}
+
+	// 发送通知：话题作者、父评论作者
+	if s.notifSvc != nil {
+		// 通知话题作者
+		if topicModel, err := s.topicRepo.GetByID(dto.TopicID); err == nil && topicModel != nil {
+			if topicModel.UserID != "" && topicModel.UserID != dto.UserID {
+				_ = s.notifSvc.Notify(topicModel.UserID, dto.UserID, "comment_created", map[string]interface{}{"topic_id": dto.TopicID, "comment_id": commentModel.GetStringID()})
+			}
+		}
+		// 通知父评论作者
+		if dto.ParentID != "" && dto.ParentID != "0" {
+			if parent, err := s.repo.GetByID(dto.ParentID); err == nil && parent != nil {
+				if parent.UserID != "" && parent.UserID != dto.UserID {
+					_ = s.notifSvc.Notify(parent.UserID, dto.UserID, "comment_replied", map[string]interface{}{"topic_id": dto.TopicID, "comment_id": commentModel.GetStringID(), "parent_id": dto.ParentID})
+				}
+			}
+		}
 	}
 
 	// 清除相关缓存
