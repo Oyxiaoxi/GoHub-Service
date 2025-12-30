@@ -27,6 +27,9 @@ func main() {
 			// 配置初始化，依赖命令行 --env 参数
 			config.InitConfig(cmd.Env)
 
+			// 初始化日志（必须在其他组件之前）
+			bootstrap.SetupLogger()
+
 			// 初始化数据库
 			bootstrap.SetupDB()
 

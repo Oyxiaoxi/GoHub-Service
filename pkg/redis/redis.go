@@ -39,10 +39,14 @@ func NewClient(address string, username string, password string, db int) *RedisC
 
     // 使用 redis 库里的 NewClient 初始化连接
     rds.Client = redis.NewClient(&redis.Options{
-        Addr:     address,
-        Username: username,
-        Password: password,
-        DB:       db,
+        Addr:            address,
+        Username:        username,
+        Password:        password,
+        DB:              db,
+        ConnMaxIdleTime: 5 * time.Minute,
+        DialTimeout:     5 * time.Second,  // 连接超时 5 秒
+        ReadTimeout:     3 * time.Second,  // 读超时 3 秒
+        WriteTimeout:    3 * time.Second,  // 写超时 3 秒
     })
 
     // 测试一下连接

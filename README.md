@@ -1,125 +1,396 @@
-# GoHub-Service
+<div align="center">
 
-基于 Gin 的论坛后端服务，采用 Service/Repository/Cache 分层，内置 Swagger 文档、限流与安全中间件、结构化日志和 Redis 缓存。
+# 🚀 GoHub-Service
 
-## 核心特性
+**现代化的 Go API 服务框架 · 企业级论坛后端**
 
-- 领域分层：Service + Repository + Cache，DTO 输入/输出，Mock 友好的接口定义
-- 安全与性能：配置化 CORS/限流、XSS/SQL 注入防护、Gzip 压缩、RequestID + 结构化日志
-- 数据与缓存：GORM 模型与迁移、Redis 缓存(Topic/Category/Link/User)、分页助手
-- 身份与验证：手机号/邮箱校验、图片验证码、短信验证码（阿里云）、JWT 鉴权
-- API 文档：Swagger UI 暴露在 `/swagger/index.html`
-- 开发工具：Cobra CLI（serve/migrate/seed/make）、脚手架生成器、测试基于 testify
+[![Go Version](https://img.shields.io/badge/Go-1.20%2B-00ADD8?style=flat&logo=go)](https://golang.org)
+[![Gin Framework](https://img.shields.io/badge/Gin-v1.9-00ADD8?style=flat)](https://github.com/gin-gonic/gin)
+[![GORM](https://img.shields.io/badge/GORM-v1.25-00ADD8?style=flat)](https://gorm.io)
+[![License](https://img.shields.io/badge/License-MIT-green.svg?style=flat)](LICENSE)
 
-## 环境要求
+基于 **Gin** 的高性能论坛后端服务  
+采用 **Service/Repository/Cache** 三层架构  
+内置 **RBAC 权限系统** · **Redis 缓存** · **结构化日志**
 
-- Go 1.25.5+
-- MySQL 8.0+
-- Redis 6.0+
+[快速开始](./docs/QUICKSTART.md) · [系统架构](./docs/ARCHITECTURE.md) · [在线文档](./docs/README.md)
 
-## 快速开始
+</div>
 
-1) 克隆并安装依赖
+---
+
+## ✨ 核心特性
+
+<table>
+<tr>
+<td width="50%">
+
+### 🔐 安全可靠
+- **JWT 认证** - 令牌加密，自动续期
+- **RBAC 权限** - 角色权限分离，灵活配置
+- **防护机制** - SQL注入/XSS/CSRF防护
+- **速率限制** - 可配置的API限流
+- **审计日志** - 完整的操作记录
+
+</td>
+<td width="50%">
+
+### ⚡ 高性能
+- **多层缓存** - 内存 + Redis 双层缓存
+- **查询优化** - 预加载、索引、批量操作
+- **连接池** - 数据库连接复用
+- **Gzip 压缩** - 响应自动压缩
+- **异步处理** - 耗时任务后台执行
+
+</td>
+</tr>
+<tr>
+<td width="50%">
+
+### 🏗️ 架构清晰
+- **分层设计** - Controller → Service → Repository
+- **依赖注入** - 松耦合，易测试
+- **接口抽象** - Mock 友好
+- **DTO 模式** - 输入输出隔离
+- **RESTful API** - 标准化接口
+
+</td>
+<td width="50%">
+
+### 🛠️ 开发友好
+- **CLI 工具** - 脚手架快速生成
+- **Swagger 文档** - API 自动生成文档
+- **热重载** - 开发模式自动重启
+- **单元测试** - 完整的测试覆盖
+- **结构化日志** - Zap 高性能日志
+
+</td>
+</tr>
+</table>
+
+---
+
+## � 快速开始
+
+### 前置要求
+
+- **Go** 1.20+
+- **MySQL** 8.0+ 或 **SQLite** 3.0+
+- **Redis** 6.0+
+
+### 30 秒快速启动
 
 ```bash
-
+# 1️⃣ 克隆项目
+git clone https://github.com/Oyxiaoxi/GoHub-Service.git
 cd GoHub-Service
+
+# 2️⃣ 安装依赖
 go mod download
-```
 
-2) 配置环境变量
-
-```bash
+# 3️⃣ 配置环境
 cp .env.example .env
-# 至少设置数据库、Redis、APP_KEY/JWT、短信或邮件等密钥
+# 编辑 .env 文件，设置数据库和 Redis 连接信息
+
+# 4️⃣ 初始化数据库
+go run main.go migrate
+
+# 5️⃣ 启动服务
+go run main.go serve
+# 🎉 服务运行在 http://localhost:3000
 ```
 
-核心配置示例：
+## 🏗️ 系统架构
 
-```env
-APP_ENV=local
-APP_PORT=3000
-APP_KEY=please_set_a_random_key
-
-DB_HOST=127.0.0.1
-DB_PORT=3306
-DB_DATABASE=gohub
-DB_USERNAME=root
-DB_PASSWORD=secret
-
-REDIS_HOST=127.0.0.1
-REDIS_PORT=6379
-REDIS_PASSWORD=
-
-JWT_SECRET=please_set_jwt_secret
+```
+┌─────────────────────────────────────┐
+│          HTTP 请求                   │
+└────────────────┬────────────────────┘
+                 │
+┌────────────────▼────────────────────┐
+│     Middleware 中间件层              │
+│   认证 → RBAC → 限流 → 日志 → CORS  │
+└────────────────┬────────────────────┘
+                 │
+┌────────────────▼────────────────────┐
+│      Controller 控制器               │
+│    验证请求 → 调用 Service           │
+└────────────────┬────────────────────┘
+                 │
+┌────────────────▼────────────────────┐
+│      Service 业务逻辑层              │
+│   处理逻辑 → 协调 Repository/Cache  │
+└────────────────┬────────────────────┘
+                 │
+        ┌────────┴────────┐
+        │                 │
+   ┌────▼─────┐    ┌────▼────────┐
+   │Repository│    │Cache(Redis) │
+   │数据访问  │    │缓存层       │
+   └────┬─────┘    └────┬────────┘
+        │                │
+        └────────┬───────┘
+                 │
+        ┌────────▼────────┐
+        │   Database      │
+        │  MySQL/SQLite   │
+        └─────────────────┘
 ```
 
-3) 初始化数据
+### 核心模块
+
+| 模块 | 说明 | 关键特性 |
+|------|------|---------|
+| 🔐 **认证授权** | JWT + RBAC | 令牌加密、角色权限、中间件保护 |
+| 👤 **用户管理** | 注册/登录/信息管理 | 邮箱验证、密码重置、个人资料 |
+| 💬 **话题讨论** | 论坛核心功能 | CRUD、点赞、收藏、排序 |
+| 📝 **评论系统** | 多级评论 | 嵌套回复、点赞、审核 |
+| 📂 **分类管理** | 内容分类 | 树形结构、权重排序 |
+| 🔗 **友情链接** | 外部链接管理 | 分组、排序、状态管理 |
+
+👉 **详细架构**: [ARCHITECTURE.md](./docs/ARCHITECTURE.md)
+
+---
+
+## 📂 项目结构
+
+```
+GoHub-Service/
+├── app/                      # 核心应用代码
+│   ├── cmd/                 # CLI 命令 (migrate/seed/serve/make)
+│   ├── http/                # HTTP 层
+│   │   ├── controllers/     # API 控制器
+│   │   └── middlewares/     # 中间件 (认证/RBAC/限流/日志)
+│   ├── models/              # 数据模型
+│   │   ├── user/           # 用户模型
+│   │   ├── topic/          # 话题模型
+│   │   ├── category/       # 分类模型
+│   │   ├── role/           # 角色模型
+│   │   └── permission/     # 权限模型
+│   ├── services/            # 业务逻辑层
+│   ├── repositories/        # 数据访问层
+│   ├── requests/            # 请求验证 (DTO)
+│   ├── policies/            # 权限策略
+│   └── cache/               # 缓存层
+├── bootstrap/                # 启动初始化
+│   ├── database.go         # 数据库初始化
+│   ├── redis.go            # Redis 初始化
+│   ├── logger.go           # 日志初始化
+│   └── route.go            # 路由初始化
+├── config/                   # 配置管理
+├── database/                 # 数据库相关
+│   ├── migrations/         # 数据库迁移
+│   ├── seeders/            # 数据填充
+│   └── factories/          # 数据工厂
+├── docs/                     # 📚 完整文档
+│   ├── README.md           # 文档导航
+│   ├── QUICKSTART.md       # 快速开始
+│   ├── ARCHITECTURE.md     # 系统架构
+│   ├── RBAC.md             # RBAC 权限
+│   ├── SECURITY.md         # 安全指南
+│   ├── DEVELOPMENT.md      # 开发指南
+│   ├── PERFORMANCE.md      # 性能优化
+│   └── FAQ.md              # 常见问题
+├── pkg/                      # 通用工具包
+│   ├── auth/               # 认证工具
+│   ├── cache/              # 缓存工具
+│   ├── database/           # 数据库工具
+│   ├── logger/             # 日志工具
+│   ├── response/           # 响应格式
+│   └── ...
+├── routes/                   # 路由定义
+├── storage/                  # 数据存储
+│   ├── logs/               # 日志文件
+│   └── uploads/            # 上传文件
+├── .env.example             # 环境配置示例
+├── go.mod                   # Go 依赖管理
+└── main.go                  # 应用入口
+```
+
+---
+
+## � RBAC 权限系统
+
+### 权限模型
+
+```
+User (用户)
+  └─→ UserRole (用户角色关联)
+        └─→ Role (角色)
+              └─→ RolePermission (角色权限关联)
+                    └─→ Permission (权限)
+```
+
+### 默认角色
+
+| 角色 | 说明 | 典型权限 |
+|------|------|---------|
+| 🔴 **admin** | 超级管理员 | 所有权限 (用户管理、系统设置、内容审核) |
+| 🟡 **moderator** | 版主 | 内容管理、用户封禁、评论审核 |
+| 🟢 **user** | 普通用户 | 创建话题、发表评论、个人信息管理 |
+| ⚪ **guest** | 访客 | 查看公开内容 |
+
+### 使用示例
+
+```go
+// 路由保护 - 要求特定角色
+router.GET("/admin/users", 
+    middlewares.Authenticate(),           // JWT 认证
+    middlewares.RequireRole("admin"),     // 角色检查
+    controllers.UserIndex)
+
+// 路由保护 - 要求特定权限
+router.DELETE("/topics/:id",
+    middlewares.Authenticate(),
+    middlewares.RequirePermission("topics.delete"),  // 权限检查
+    controllers.TopicDestroy)
+```
+
+👉 **完整指南**: [RBAC.md](./docs/RBAC.md)
+
+---
+
+## 🛠️ 常用命令
+
+### 服务管理
 
 ```bash
-# 运行迁移
-go run main.go migrate up
+# 启动开发服务器
+go run main.go serve
+# 服务运行在 http://localhost:3000
 
-# 可选：导入示例数据
+# 生产环境构建
+go build -o gohub main.go
+./gohub serve
+```
+
+### 数据库管理
+
+```bash
+# 执行数据库迁移
+go run main.go migrate
+
+# 回滚迁移
+go run main.go migrate:rollback
+
+# 刷新数据库（清空并重新迁移）
+go run main.go migrate:refresh
+
+# 查看迁移状态
+go run main.go migrate:status
+
+# 导入测试数据
 go run main.go seed
 ```
 
-种子数据概览（本地体验用）：
-- 用户：30 个（高/中/低活跃度，随机城市、简介、头像、积分、粉丝数）
-- 分类：6 个精选主题（Tech / AI / Career / Life / Product / Ops）
-- 话题：40 个随机标题与正文，带浏览/点赞/收藏计数
-- 评论：120 顶层 + 25 回复，回复指向真实父评论
-- 备注：`SeedInteractions` / `SeedMessages` 占位在运行顺序中，如未实现请从 `database/seeders/seeder.go` 暂时移除或补充对应 seeder
-
-4) 启动服务
+### 开发工具
 
 ```bash
-go run main.go serve        # 等同直接 go run main.go
-# 服务默认监听 http://localhost:3000
+# 生成模型
+go run main.go make:model Post
+
+# 生成迁移文件
+go run main.go make:migration create_posts_table
+
+# 生成控制器
+go run main.go make:controller PostController
+
+# 生成 Service
+go run main.go make:service PostService
+
+# 生成 Repository
+go run main.go make:repository PostRepository
+
+# 查看所有可用命令
+go run main.go --help
 ```
 
-## 常用命令
+### 测试
 
-- 运行 Web 服务：`go run main.go serve`
-- 数据库迁移：`go run main.go migrate up` / `down` / `refresh`
-- 数据填充：`go run main.go seed` (或指定 seeder 名称)
-- 生成代码脚手架：`go run main.go make --help`
-- 运行测试：`go test ./...`
+```bash
+# 运行所有测试
+go test ./...
 
-## 开发流程速览
+# 运行特定包的测试
+go test ./app/services/...
 
-- 安装依赖并启动 MySQL/Redis；复制 `.env`，填好数据库、Redis、JWT/APP_KEY
-- 执行迁移与种子（如需体验数据）；未实现的 seeder 需从运行顺序移除或补齐
-- 本地运行：`go run main.go serve`（或使用 `make` 脚手架生成命令）
-- 测试：`go test ./...`（建议在修改仓储/服务逻辑后运行）
-- 日志：默认输出到 `storage/logs`，可在 `config/log.go` 调整级别与轮转策略
+# 显示测试覆盖率
+go test -cover ./...
 
-## 项目结构
-
-```
-app/            # 控制器、服务、仓储、请求验证、策略
-bootstrap/      # 启动期初始化（DB/Redis/Logger/Cache/Route）
-config/         # 配置定义（app, db, redis, jwt, limiter, cors, sms, mail, etc.）
-database/       # 迁移、工厂、种子数据
-docs/           # 安全、DTO、日志、性能与服务层指南
-pkg/            # 通用库（auth, cache, controller helper, paginator, logger, limiter 等）
-routes/         # 路由注册
-storage/        # 日志与临时文件
+# 生成覆盖率报告
+go test -coverprofile=coverage.out ./...
+go tool cover -html=coverage.out
 ```
 
-## 文档与指南
+---
 
-- 开发者指南：[docs/DEVELOPMENT_GUIDE.md](docs/DEVELOPMENT_GUIDE.md)
-- 服务层架构：[docs/SERVICE_LAYER_GUIDE.md](docs/SERVICE_LAYER_GUIDE.md)
-- DTO 设计与实现：[docs/DTO_GUIDE.md](docs/DTO_GUIDE.md) | [docs/DTO_IMPLEMENTATION_SUMMARY.md](docs/DTO_IMPLEMENTATION_SUMMARY.md)
-- 安全与限流：[docs/API_SECURITY.md](docs/API_SECURITY.md)
-- 日志与性能：[docs/LOGGING_GUIDE.md](docs/LOGGING_GUIDE.md) | [docs/PERFORMANCE_OPTIMIZATION.md](docs/PERFORMANCE_OPTIMIZATION.md)
+## 📚 文档中心
 
-## 开发提示
+完整的项目文档导航 👉 [docs/README.md](./docs/README.md)
 
-- 限流/CORS：通过 config/limiter.go 与 config/cors.go 的 env 配置启用/调优
-- Redis 缓存：服务层优先读缓存，写操作会刷新相关键；确保 Redis 可用
-- 日志：Zap + Lumberjack，默认输出到 `storage/logs`
-## License
+| 文档 | 说明 |
+|------|------|
+| 🚀 [快速开始](./docs/QUICKSTART.md) | 5分钟搭建开发环境，包含故障排查 |
+| 🏗️ [系统架构](./docs/ARCHITECTURE.md) | 理解分层设计和代码组织 |
+| 🔐 [RBAC 权限](./docs/RBAC.md) | 权限系统完整实现指南 |
+| 🛡️ [API 安全](./docs/SECURITY.md) | 安全最佳实践和检查清单 |
+| 💻 [开发指南](./docs/DEVELOPMENT.md) | 编码规范、测试、Git 工作流 |
+| ⚡ [性能优化](./docs/PERFORMANCE.md) | 缓存策略和数据库优化 |
+| ❓ [常见问题](./docs/FAQ.md) | 26+ 常见问题解答 |
 
-MIT
+---
+
+## 🌍 环境配置
+
+最小化配置示例（`.env` 文件）：
+
+```env
+# 应用配置
+APP_NAME=GoHub-Service
+APP_ENV=local
+APP_KEY=your-random-32-char-key-here
+APP_DEBUG=true
+APP_PORT=8080
+
+# 数据库配置 (推荐本地开发使用 SQLite)
+DB_CONNECTION=sqlite
+DB_SQL_FILE=database/database.db
+
+# 生产环境使用 MySQL
+# DB_CONNECTION=mysql
+# DB_HOST=127.0.0.1
+# DB_PORT=3306
+# DB_DATABASE=gohub
+# DB_USERNAME=root
+# DB_PASSWORD=password
+
+# Redis 配置
+REDIS_HOST=127.0.0.1
+REDIS_PORT=6379
+REDIS_PASSWORD=
+REDIS_DB=0
+
+# JWT 配置
+JWT_SECRET=your-jwt-secret-key
+JWT_EXPIRE_TIME=7200
+JWT_MAX_REFRESH_TIME=604800
+
+# 日志配置
+LOG_LEVEL=debug
+LOG_TYPE=daily
+```
+
+完整配置说明请查看 [QUICKSTART.md](./docs/QUICKSTART.md)
+
+---
+
+## 📞 联系我们
+
+- 🐛 问题报告: [GitHub Issues](https://github.com/Oyxiaoxi/GoHub-Service/issues)
+- 💬 讨论: [GitHub Discussions](https://github.com/Oyxiaoxi/GoHub-Service/discussions)
+
+## 📄 License
+
+MIT License - 详见 [LICENSE](LICENSE) 文件
+
+---
