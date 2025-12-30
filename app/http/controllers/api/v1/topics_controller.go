@@ -3,8 +3,8 @@ package v1
 import (
 	"GoHub-Service/app/requests"
 	"GoHub-Service/app/services"
-	apperrors "GoHub-Service/pkg/errors"
 	"GoHub-Service/pkg/auth"
+	apperrors "GoHub-Service/pkg/errors"
 	"GoHub-Service/pkg/logger"
 	"GoHub-Service/pkg/response"
 
@@ -14,13 +14,15 @@ import (
 
 type TopicsController struct {
 	BaseAPIController
-	topicService *services.TopicService
+	topicService       *services.TopicService
+	interactionService *services.InteractionService
 }
 
 // NewTopicsController 创建TopicsController实例
 func NewTopicsController() *TopicsController {
 	return &TopicsController{
-		topicService: services.NewTopicService(),
+		topicService:       services.NewTopicService(),
+		interactionService: services.NewInteractionService(),
 	}
 }
 
@@ -174,7 +176,7 @@ func (ctrl *TopicsController) Update(c *gin.Context) {
 	// 检查所有权
 	topicID := c.Param("id")
 	currentUserID := auth.CurrentUID(c)
-	
+
 	isOwner, err := ctrl.topicService.CheckOwnership(topicID, currentUserID)
 	if err != nil {
 		if apperrors.IsAppError(err) {
@@ -185,7 +187,7 @@ func (ctrl *TopicsController) Update(c *gin.Context) {
 		response.Abort500(c)
 		return
 	}
-	
+
 	if !isOwner {
 		response.Abort403(c, "无权限操作")
 		return
@@ -227,7 +229,7 @@ func (ctrl *TopicsController) Delete(c *gin.Context) {
 	// 检查所有权
 	topicID := c.Param("id")
 	currentUserID := auth.CurrentUID(c)
-	
+
 	isOwner, err := ctrl.topicService.CheckOwnership(topicID, currentUserID)
 	if err != nil {
 		if apperrors.IsAppError(err) {
@@ -238,7 +240,7 @@ func (ctrl *TopicsController) Delete(c *gin.Context) {
 		response.Abort500(c)
 		return
 	}
-	
+
 	if !isOwner {
 		response.Abort403(c, "无权限操作")
 		return
@@ -255,6 +257,69 @@ func (ctrl *TopicsController) Delete(c *gin.Context) {
 		} else {
 			response.ApiError(c, 500, err.Code, err.Message)
 		}
+		return
+	}
+	response.Success(c)
+}
+
+// Like 点赞话题
+func (ctrl *TopicsController) Like(c *gin.Context) {
+	topicID := c.Param("id")
+	userID := auth.CurrentUID(c)
+
+	if err := ctrl.interactionService.LikeTopic(userID, topicID); err != nil {
+		logger.LogErrorWithContext(c, err, "点赞话题失败")
+		response.ApiError(c, 500, err.Code, err.Message)
+		return
+	}
+	response.Success(c)
+}
+
+// Unlike 取消点赞
+func (ctrl *TopicsController) Unlike(c *gin.Context) {
+	topicID := c.Param("id")
+	userID := auth.CurrentUID(c)
+
+	if err := ctrl.interactionService.UnlikeTopic(userID, topicID); err != nil {
+		logger.LogErrorWithContext(c, err, "取消点赞失败")
+		response.ApiError(c, 500, err.Code, err.Message)
+		return
+	}
+	response.Success(c)
+}
+
+// Favorite 收藏话题
+func (ctrl *TopicsController) Favorite(c *gin.Context) {
+	topicID := c.Param("id")
+	userID := auth.CurrentUID(c)
+
+	if err := ctrl.interactionService.FavoriteTopic(userID, topicID); err != nil {
+		logger.LogErrorWithContext(c, err, "收藏话题失败")
+		response.ApiError(c, 500, err.Code, err.Message)
+		return
+	}
+	response.Success(c)
+}
+
+// Unfavorite 取消收藏
+func (ctrl *TopicsController) Unfavorite(c *gin.Context) {
+	topicID := c.Param("id")
+	userID := auth.CurrentUID(c)
+
+	if err := ctrl.interactionService.UnfavoriteTopic(userID, topicID); err != nil {
+		logger.LogErrorWithContext(c, err, "取消收藏失败")
+		response.ApiError(c, 500, err.Code, err.Message)
+		return
+	}
+	response.Success(c)
+}
+
+// AddView 增加浏览量
+func (ctrl *TopicsController) AddView(c *gin.Context) {
+	topicID := c.Param("id")
+	if err := ctrl.interactionService.AddTopicView(topicID); err != nil {
+		logger.LogErrorWithContext(c, err, "增加浏览量失败")
+		response.ApiError(c, 500, err.Code, err.Message)
 		return
 	}
 	response.Success(c)

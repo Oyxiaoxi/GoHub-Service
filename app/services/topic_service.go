@@ -48,6 +48,9 @@ type TopicResponseDTO struct {
 	Body       string    `json:"body"`
 	CategoryID string    `json:"category_id"`
 	UserID     string    `json:"user_id"`
+	LikeCount     int64     `json:"like_count"`
+	FavoriteCount int64     `json:"favorite_count"`
+	ViewCount     int64     `json:"view_count"`
 	CreatedAt  time.Time `json:"created_at"`
 	UpdatedAt  time.Time `json:"updated_at"`
 }
@@ -66,6 +69,9 @@ func (s *TopicService) toResponseDTO(t *topic.Topic) *TopicResponseDTO {
 		Body:       t.Body,
 		CategoryID: t.CategoryID,
 		UserID:     t.UserID,
+		LikeCount:     t.LikeCount,
+		FavoriteCount: t.FavoriteCount,
+		ViewCount:     t.ViewCount,
 		CreatedAt:  t.CreatedAt,
 		UpdatedAt:  t.UpdatedAt,
 	}
@@ -81,6 +87,9 @@ func (s *TopicService) toResponseDTOList(topics []topic.Topic) []TopicResponseDT
 			Body:       t.Body,
 			CategoryID: t.CategoryID,
 			UserID:     t.UserID,
+			LikeCount:     t.LikeCount,
+			FavoriteCount: t.FavoriteCount,
+			ViewCount:     t.ViewCount,
 			CreatedAt:  t.CreatedAt,
 			UpdatedAt:  t.UpdatedAt,
 		}

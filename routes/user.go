@@ -17,5 +17,7 @@ func RegisterUserRoutes(rg *gin.RouterGroup, usersCtrl *v1.UsersController) {
 		usersGroup.PUT("/phone", middlewares.AuthJWT(), usersCtrl.UpdatePhone)
 		usersGroup.PUT("/password", middlewares.AuthJWT(), usersCtrl.UpdatePassword)
 		usersGroup.PUT("/avatar", middlewares.AuthJWT(), usersCtrl.UpdateAvatar)
+		usersGroup.POST("/:id/follow", middlewares.AuthJWT(), usersCtrl.Follow)
+		usersGroup.POST("/:id/unfollow", middlewares.AuthJWT(), usersCtrl.Unfollow)
 	}
 }
