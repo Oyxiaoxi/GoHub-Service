@@ -86,4 +86,7 @@ func RegisterAPIRoutes(r *gin.Engine) {
 
 	// 私信相关
 	RegisterMessageRoutes(v1)
+
+	// 管理后台路由
+	RegisterAdminRoutes(r)
 }

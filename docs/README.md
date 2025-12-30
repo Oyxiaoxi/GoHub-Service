@@ -12,6 +12,7 @@
 | API 安全 | [SECURITY.md](./SECURITY.md) |
 | 开发规范 | [DEVELOPMENT.md](./DEVELOPMENT.md) |
 | 性能优化 | [PERFORMANCE.md](./PERFORMANCE.md) |
+| 管理后台 | [ADMIN_API.md](./ADMIN_API.md) |
 | 常见问题 | [FAQ.md](./FAQ.md) |
 
 ## 📖 文档说明
@@ -27,6 +28,9 @@
 - **[DEVELOPMENT.md](./DEVELOPMENT.md)** - 编码规范、项目结构、常见任务
 - **[SECURITY.md](./SECURITY.md)** - API 安全防护、认证授权
 - **[PERFORMANCE.md](./PERFORMANCE.md)** - 缓存策略、性能调优
+
+### API 文档
+- **[ADMIN_API.md](./ADMIN_API.md)** - 管理后台完整 API，用户/话题/分类管理
 
 ### 参考资料
 - **[FAQ.md](./FAQ.md)** - 常见问题解答

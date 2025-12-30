@@ -147,6 +147,7 @@ go run main.go serve
 | 📝 **评论系统** | 多级评论 | 嵌套回复、点赞、审核 |
 | 📂 **分类管理** | 内容分类 | 树形结构、权重排序 |
 | 🔗 **友情链接** | 外部链接管理 | 分组、排序、状态管理 |
+| 🎛️ **管理后台** | 完整后台系统 | 用户/话题/分类管理、数据统计 |
 
 👉 **详细架构**: [ARCHITECTURE.md](./docs/ARCHITECTURE.md)
 
@@ -336,6 +337,7 @@ go tool cover -html=coverage.out
 | 🛡️ [API 安全](./docs/SECURITY.md) | 安全最佳实践和检查清单 |
 | 💻 [开发指南](./docs/DEVELOPMENT.md) | 编码规范、测试、Git 工作流 |
 | ⚡ [性能优化](./docs/PERFORMANCE.md) | 缓存策略和数据库优化 |
+| 🎛️ [管理后台 API](./docs/ADMIN_API.md) | 完整的管理后台接口文档 |
 | ❓ [常见问题](./docs/FAQ.md) | 26+ 常见问题解答 |
 
 ---
