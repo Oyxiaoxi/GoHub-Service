@@ -45,6 +45,12 @@ func LimitIPWithConfig(config LimitConfig) gin.HandlerFunc {
 	}
 
 	return func(c *gin.Context) {
+		// 跳过 OPTIONS 预检请求
+		if c.Request.Method == "OPTIONS" {
+			c.Next()
+			return
+		}
+
 		// 针对 IP 限流
 		key := limiter.GetKeyIP(c)
 		if ok := limitHandlerWithConfig(c, key, config); !ok {
@@ -70,6 +76,12 @@ func LimitPerRouteWithConfig(config LimitConfig) gin.HandlerFunc {
 	}
 
 	return func(c *gin.Context) {
+		// 跳过 OPTIONS 预检请求
+		if c.Request.Method == "OPTIONS" {
+			c.Next()
+			return
+		}
+
 		// 针对单个路由，增加访问次数
 		c.Set("limiter-once", false)
 
@@ -99,6 +111,12 @@ func LimitByUserWithConfig(config LimitConfig) gin.HandlerFunc {
 	}
 
 	return func(c *gin.Context) {
+		// 跳过 OPTIONS 预检请求
+		if c.Request.Method == "OPTIONS" {
+			c.Next()
+			return
+		}
+
 		// 获取当前用户 ID
 		userID, exists := c.Get("user_id")
 		if !exists {

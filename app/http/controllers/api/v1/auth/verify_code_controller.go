@@ -20,8 +20,14 @@ type VerifyCodeController struct {
 func (vc *VerifyCodeController) ShowCaptcha(c *gin.Context) {
     // 生成验证码
     id, b64s, _, err := captcha.NewCaptcha().GenerateCaptcha()
+    
     // 记录错误日志，因为验证码是用户的入口，出错时应该记 error 等级的日志
-    logger.LogIf(err)
+    if err != nil {
+        logger.LogIf(err)
+        response.Abort500(c, "生成验证码失败，请重试")
+        return
+    }
+    
     // 返回给用户
     response.JSON(c, gin.H{
         "captcha_id":    id,

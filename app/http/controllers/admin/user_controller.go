@@ -16,6 +16,38 @@ import (
 // UserController 用户管理控制器
 type UserController struct{}
 
+// AdminUserResponse 管理员视图的用户响应结构（包含敏感信息）
+type AdminUserResponse struct {
+	ID             uint64 `json:"id"`
+	Name           string `json:"name"`
+	Email          string `json:"email"`
+	Phone          string `json:"phone"`
+	City           string `json:"city,omitempty"`
+	Introduction   string `json:"introduction,omitempty"`
+	Avatar         string `json:"avatar,omitempty"`
+	FollowersCount int64  `json:"followers_count,omitempty"`
+	Points         int64  `json:"points,omitempty"`
+	CreatedAt      string `json:"created_at"`
+	UpdatedAt      string `json:"updated_at"`
+}
+
+// toAdminUserResponse 将用户模型转换为管理员响应格式
+func toAdminUserResponse(u user.User) AdminUserResponse {
+	return AdminUserResponse{
+		ID:             u.ID,
+		Name:           u.Name,
+		Email:          u.Email,
+		Phone:          u.Phone,
+		City:           u.City,
+		Introduction:   u.Introduction,
+		Avatar:         u.Avatar,
+		FollowersCount: u.FollowersCount,
+		Points:         u.Points,
+		CreatedAt:      u.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
+		UpdatedAt:      u.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
+	}
+}
+
 // Index 用户列表
 func (ctrl *UserController) Index(c *gin.Context) {
 	var req requests.PaginationRequest
@@ -42,8 +74,14 @@ func (ctrl *UserController) Index(c *gin.Context) {
 		perPage,
 	)
 
+	// 转换为管理员响应格式
+	adminUsers := make([]AdminUserResponse, len(users))
+	for i, u := range users {
+		adminUsers[i] = toAdminUserResponse(u)
+	}
+
 	response.Data(c, gin.H{
-		"users": users,
+		"users": adminUsers,
 		"paging": paging,
 	})
 }
