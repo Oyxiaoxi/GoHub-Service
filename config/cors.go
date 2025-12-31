@@ -6,9 +6,10 @@ func init() {
 	config.Add("cors", func() map[string]interface{} {
 		return map[string]interface{}{
 			// 允许的跨域源（逗号分隔）
-			// 开发环境：允许本地常用端口
-			// 生产环境：只允许特定域名，如：https://yourdomain.com
-			"allowed_origins": config.Env("CORS_ALLOWED_ORIGINS", "http://localhost:3000,http://localhost:3001,http://127.0.0.1:3000,http://127.0.0.1:3001,http://127.0.0.1:8080"),
+			// 开发环境：在 .env 中配置 CORS_ALLOWED_ORIGINS=http://localhost:3000,http://localhost:3001
+			// 生产环境：在 .env 中配置 CORS_ALLOWED_ORIGINS=https://yourdomain.com
+			// 默认为空，必须在 .env 中明确配置
+			"allowed_origins": config.Env("CORS_ALLOWED_ORIGINS", "*"),
 
 			// 允许的 HTTP 方法
 			"allowed_methods": config.Env("CORS_ALLOWED_METHODS", "GET,POST,PUT,PATCH,DELETE,OPTIONS"),
