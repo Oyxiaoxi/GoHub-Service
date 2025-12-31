@@ -39,6 +39,9 @@ const (
 	CodeCreateFailed      = 5002
 	CodeUpdateFailed      = 5003
 	CodeDeleteFailed      = 5004
+	
+	// 服务器相关错误码 (6xxx)
+	CodeServerError       = 6001
 )
 
 // 错误码对应的默认消息
@@ -74,6 +77,7 @@ var codeMessages = map[int]string{
 	CodeCreateFailed:      "创建失败",
 	CodeUpdateFailed:      "更新失败",
 	CodeDeleteFailed:      "删除失败",
+	CodeServerError:       "服务器内部错误",
 }
 
 // GetMessage 获取错误码对应的消息

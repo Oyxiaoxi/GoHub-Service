@@ -80,6 +80,30 @@ func RegisterAdminRoutes(r *gin.Engine) {
 			categories.DELETE("/:id", categoryController.Delete) // 删除分类
 			categories.POST("/sort", categoryController.Sort)    // 分类排序
 		}
+
+		// 角色管理
+		roleController := &admin.RoleController{}
+		roles := adminGroup.Group("/roles")
+		{
+			roles.GET("", roleController.Index)              // 获取角色列表
+			roles.POST("", roleController.Store)             // 创建角色
+			roles.GET("/:id", roleController.Show)           // 获取角色详情
+			roles.PUT("/:id", roleController.Update)         // 更新角色
+			roles.DELETE("/:id", roleController.Delete)      // 删除角色
+			roles.GET("/:id/permissions", roleController.GetPermissions)       // 获取角色权限
+			roles.POST("/:id/permissions", roleController.AssignPermissions)   // 分配权限
+		}
+
+		// 权限管理
+		permissionController := &admin.PermissionController{}
+		permissions := adminGroup.Group("/permissions")
+		{
+			permissions.GET("", permissionController.Index)         // 获取权限列表
+			permissions.POST("", permissionController.Store)        // 创建权限
+			permissions.GET("/:id", permissionController.Show)      // 获取权限详情
+			permissions.PUT("/:id", permissionController.Update)    // 更新权限
+			permissions.DELETE("/:id", permissionController.Delete) // 删除权限
+		}
 	}
 
 	// 版主路由组（moderator 角色）

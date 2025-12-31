@@ -55,7 +55,7 @@ func ApiErrorWithCode(c *gin.Context, bizCode int) {
 		httpCode = http.StatusForbidden
 	case CodeNotFound, CodeUserNotFound, CodeTopicNotFound, CodeCategoryNotFound, CodeLinkNotFound:
 		httpCode = http.StatusNotFound
-	case CodeInternalError, CodeDatabaseError:
+	case CodeInternalError, CodeDatabaseError, CodeServerError:
 		httpCode = http.StatusInternalServerError
 	case CodeValidationError, CodeInvalidParams:
 		httpCode = http.StatusUnprocessableEntity
