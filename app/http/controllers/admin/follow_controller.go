@@ -67,13 +67,13 @@ func (ctrl *FollowController) Index(c *gin.Context) {
 		adminFollows[i] = toAdminFollowResponse(&f)
 	}
 
-	response.ApiSuccess(c, gin.H{
-		"data": adminFollows,
-		"pagination": gin.H{
-			"total":     total,
-			"page":      page,
-			"per_page":  perPage,
-			"last_page": (total + int64(perPage) - 1) / int64(perPage),
+	response.Data(c, gin.H{
+		"follows": adminFollows,
+		"paging": gin.H{
+			"total":      total,
+			"page":       page,
+			"per_page":   perPage,
+			"total_page": (total + int64(perPage) - 1) / int64(perPage),
 		},
 	})
 }
@@ -97,7 +97,7 @@ func (ctrl *FollowController) Delete(c *gin.Context) {
 	// 检查关注是否存在
 	var f follow.Follow
 	if err := database.DB.First(&f, "id = ?", id).Error; err != nil {
-		response.ApiError(c, http.StatusNotFound, response.CodeNotFound, "关注不存在")
+		response.Abort404(c, "关注不存在")
 		return
 	}
 
@@ -124,7 +124,7 @@ func (ctrl *FollowController) Stats(c *gin.Context) {
 	// 获取总关注数
 	database.DB.Model(&follow.Follow{}).Count(&totalFollows)
 
-	response.ApiSuccess(c, gin.H{
+	response.Data(c, gin.H{
 		"total_follows": totalFollows,
 	})
 }
@@ -170,13 +170,13 @@ func (ctrl *FollowController) GetFollowers(c *gin.Context) {
 		adminFollows[i] = toAdminFollowResponse(&f)
 	}
 
-	response.ApiSuccess(c, gin.H{
-		"data": adminFollows,
-		"pagination": gin.H{
-			"total":     total,
-			"page":      page,
-			"per_page":  perPage,
-			"last_page": (total + int64(perPage) - 1) / int64(perPage),
+	response.Data(c, gin.H{
+		"followers": adminFollows,
+		"paging": gin.H{
+			"total":      total,
+			"page":       page,
+			"per_page":   perPage,
+			"total_page": (total + int64(perPage) - 1) / int64(perPage),
 		},
 	})
 }
@@ -222,13 +222,13 @@ func (ctrl *FollowController) GetFollowing(c *gin.Context) {
 		adminFollows[i] = toAdminFollowResponse(&f)
 	}
 
-	response.ApiSuccess(c, gin.H{
-		"data": adminFollows,
-		"pagination": gin.H{
-			"total":     total,
-			"page":      page,
-			"per_page":  perPage,
-			"last_page": (total + int64(perPage) - 1) / int64(perPage),
+	response.Data(c, gin.H{
+		"following": adminFollows,
+		"paging": gin.H{
+			"total":      total,
+			"page":       page,
+			"per_page":   perPage,
+			"total_page": (total + int64(perPage) - 1) / int64(perPage),
 		},
 	})
 }

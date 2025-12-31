@@ -102,13 +102,13 @@ func (ctrl *CommentController) Index(c *gin.Context) {
 		adminComments[i] = toAdminCommentResponse(&comm)
 	}
 
-	response.ApiSuccess(c, gin.H{
-		"data": adminComments,
-		"pagination": gin.H{
-			"total":     total,
-			"page":      page,
-			"per_page":  perPage,
-			"last_page": (total + int64(perPage) - 1) / int64(perPage),
+	response.Data(c, gin.H{
+		"comments": adminComments,
+		"paging": gin.H{
+			"total":      total,
+			"page":       page,
+			"per_page":   perPage,
+			"total_page": (total + int64(perPage) - 1) / int64(perPage),
 		},
 	})
 }
@@ -131,11 +131,13 @@ func (ctrl *CommentController) Show(c *gin.Context) {
 
 	var comm comment.Comment
 	if err := database.DB.First(&comm, "id = ?", id).Error; err != nil {
-		response.ApiError(c, http.StatusNotFound, response.CodeNotFound, "评论不存在")
+		response.Abort404(c, "评论不存在")
 		return
 	}
 
-	response.ApiSuccess(c, toAdminCommentResponse(&comm))
+	response.Data(c, gin.H{
+		"comment": toAdminCommentResponse(&comm),
+	})
 }
 
 // Delete 删除评论
@@ -157,7 +159,7 @@ func (ctrl *CommentController) Delete(c *gin.Context) {
 	// 检查评论是否存在
 	var comm comment.Comment
 	if err := database.DB.First(&comm, "id = ?", id).Error; err != nil {
-		response.ApiError(c, http.StatusNotFound, response.CodeNotFound, "评论不存在")
+		response.Abort404(c, "评论不存在")
 		return
 	}
 
@@ -217,12 +219,7 @@ func (ctrl *CommentController) Stats(c *gin.Context) {
 	// 获取总点赞数
 	database.DB.Model(&comment.Comment{}).Select("SUM(like_count)").Row().Scan(&totalLikes)
 
-	// 获取今日评论数
-	database.DB.Model(&comment.Comment{}).
-		Where("DATE(created_at) = CURDATE()").
-		Count(&totalComments)
-
-	response.ApiSuccess(c, gin.H{
+	response.Data(c, gin.H{
 		"total_comments": totalComments,
 		"total_likes":    totalLikes,
 	})

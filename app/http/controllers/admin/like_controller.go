@@ -84,13 +84,13 @@ func (ctrl *LikeController) Index(c *gin.Context) {
 		adminLikes[i] = toAdminLikeResponse(&l)
 	}
 
-	response.ApiSuccess(c, gin.H{
-		"data": adminLikes,
-		"pagination": gin.H{
-			"total":     total,
-			"page":      page,
-			"per_page":  perPage,
-			"last_page": (total + int64(perPage) - 1) / int64(perPage),
+	response.Data(c, gin.H{
+		"likes": adminLikes,
+		"paging": gin.H{
+			"total":      total,
+			"page":       page,
+			"per_page":   perPage,
+			"total_page": (total + int64(perPage) - 1) / int64(perPage),
 		},
 	})
 }
@@ -114,7 +114,7 @@ func (ctrl *LikeController) Delete(c *gin.Context) {
 	// 检查点赞是否存在
 	var l like.Like
 	if err := database.DB.First(&l, "id = ?", id).Error; err != nil {
-		response.ApiError(c, http.StatusNotFound, response.CodeNotFound, "点赞不存在")
+		response.Abort404(c, "点赞不存在")
 		return
 	}
 
@@ -149,7 +149,7 @@ func (ctrl *LikeController) Stats(c *gin.Context) {
 	// 获取评论点赞数
 	database.DB.Model(&like.Like{}).Where("target_type = ?", "comment").Count(&commentLikes)
 
-	response.ApiSuccess(c, gin.H{
+	response.Data(c, gin.H{
 		"total_likes":   totalLikes,
 		"topic_likes":   topicLikes,
 		"comment_likes": commentLikes,
@@ -205,13 +205,13 @@ func (ctrl *LikeController) GetTargetLikes(c *gin.Context) {
 		adminLikes[i] = toAdminLikeResponse(&l)
 	}
 
-	response.ApiSuccess(c, gin.H{
-		"data": adminLikes,
-		"pagination": gin.H{
-			"total":     total,
-			"page":      page,
-			"per_page":  perPage,
-			"last_page": (total + int64(perPage) - 1) / int64(perPage),
+	response.Data(c, gin.H{
+		"likes": adminLikes,
+		"paging": gin.H{
+			"total":      total,
+			"page":       page,
+			"per_page":   perPage,
+			"total_page": (total + int64(perPage) - 1) / int64(perPage),
 		},
 	})
 }
