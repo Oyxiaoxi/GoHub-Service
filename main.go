@@ -50,6 +50,7 @@ func main() {
 		cmd.CmdMigrate,
 		cmd.CmdDBSeed,
 		cmd.CmdCache,
+		cmd.CmdSlowLog,
 	)
 
 	// 配置默认运行 Web 服务
