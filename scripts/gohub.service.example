@@ -1,0 +1,41 @@
+[Unit]
+Description=GoHub API Service
+Documentation=https://github.com/Oyxiaoxi/GoHub-Service
+After=network.target mysql.service redis.service
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/var/www/gohub
+
+# 环境变量
+Environment="GIN_MODE=release"
+Environment="PATH=/usr/local/bin:/usr/bin:/bin"
+
+# 启动命令
+ExecStart=/var/www/gohub/main
+
+# 重启策略
+Restart=always
+RestartSec=10
+StartLimitInterval=0
+
+# 资源限制
+LimitNOFILE=65536
+LimitNPROC=4096
+
+# 安全配置
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/www/gohub/storage /var/www/gohub/public/uploads
+
+# 日志
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=gohub
+
+[Install]
+WantedBy=multi-user.target
