@@ -86,7 +86,7 @@ func (r *LikeRepositoryImpl) GetAll(offset, limit int) ([]like.Like, int64, erro
 	var likes []like.Like
 	var count int64
 
-	if err := database.DB.Count(&count).Error; err != nil {
+	if err := database.DB.Model(&like.Like{}).Count(&count).Error; err != nil {
 		return nil, 0, err
 	}
 

@@ -109,7 +109,7 @@ func (r *FollowRepositoryImpl) GetAll(offset, limit int) ([]follow.Follow, int64
 	var follows []follow.Follow
 	var count int64
 
-	if err := database.DB.Count(&count).Error; err != nil {
+	if err := database.DB.Model(&follow.Follow{}).Count(&count).Error; err != nil {
 		return nil, 0, err
 	}
 
