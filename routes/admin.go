@@ -104,6 +104,39 @@ func RegisterAdminRoutes(r *gin.Engine) {
 			permissions.PUT("/:id", permissionController.Update)    // 更新权限
 			permissions.DELETE("/:id", permissionController.Delete) // 删除权限
 		}
+
+		// 评论管理
+		commentController := &admin.CommentController{}
+		comments := adminGroup.Group("/comments")
+		{
+			comments.GET("", commentController.Index)               // 评论列表
+			comments.GET("/:id", commentController.Show)            // 评论详情
+			comments.DELETE("/:id", commentController.Delete)       // 删除评论
+			comments.POST("/batch-delete", commentController.BatchDelete) // 批量删除评论
+			comments.GET("/stats", commentController.Stats)         // 评论统计
+		}
+
+		// 关注管理
+		followController := &admin.FollowController{}
+		follows := adminGroup.Group("/follows")
+		{
+			follows.GET("", followController.Index)                 // 关注列表
+			follows.DELETE("/:id", followController.Delete)         // 删除关注
+			follows.GET("/stats", followController.Stats)           // 关注统计
+		}
+
+		// 在用户管理中添加关注相关接口
+		users.GET("/:id/followers", followController.GetFollowers)  // 用户粉丝列表
+		users.GET("/:id/following", followController.GetFollowing)  // 用户关注列表
+
+		// 点赞管理
+		likeController := &admin.LikeController{}
+		likes := adminGroup.Group("/likes")
+		{
+			likes.GET("", likeController.Index)                      // 点赞列表
+			likes.DELETE("/:id", likeController.Delete)              // 删除点赞
+			likes.GET("/stats", likeController.Stats)                // 点赞统计
+		}
 	}
 
 	// 版主路由组（moderator 角色）

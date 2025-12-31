@@ -55,3 +55,18 @@ func validateFile(c *gin.Context, data interface{}, rules govalidator.MapData, m
     // 调用 govalidator 的 Validate 方法来验证文件
     return govalidator.New(opts).Validate()
 }
+// BatchDeleteRequest 批量删除请求
+type BatchDeleteRequest struct {
+	IDs []string `json:"ids" form:"ids"`
+}
+
+// ValidateBatchDelete 验证批量删除请求
+func ValidateBatchDelete(c *gin.Context, req *BatchDeleteRequest) bool {
+	return Validate(c, req, func(data interface{}, c *gin.Context) map[string][]string {
+		return validate(data, govalidator.MapData{
+			"ids": []string{"required"},
+		}, govalidator.MapData{
+			"ids": []string{"required:ID列表不能为空"},
+		})
+	})
+}
