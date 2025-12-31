@@ -14,8 +14,17 @@ func RegisterCommentRoutes(rg *gin.RouterGroup, commentsCtrl *v1.CommentsControl
 	{
 		commentsGroup.GET("", commentsCtrl.Index)
 		commentsGroup.GET("/:id", commentsCtrl.Show)
-		commentsGroup.POST("", middlewares.AuthJWT(), commentsCtrl.Store)
-		commentsGroup.PUT("/:id", middlewares.AuthJWT(), commentsCtrl.Update)
+		// 创建和更新评论应用内容安全检查
+		commentsGroup.POST("", 
+			middlewares.AuthJWT(), 
+			middlewares.SensitiveWordFilter(),
+			commentsCtrl.Store,
+		)
+		commentsGroup.PUT("/:id", 
+			middlewares.AuthJWT(), 
+			middlewares.SensitiveWordFilter(),
+			commentsCtrl.Update,
+		)
 		commentsGroup.DELETE("/:id", middlewares.AuthJWT(), commentsCtrl.Delete)
 		
 		// 评论点赞

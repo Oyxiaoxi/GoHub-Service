@@ -12,9 +12,23 @@ func RegisterTopicRoutes(rg *gin.RouterGroup, topicsCtrl *v1.TopicsController) {
 	topicsGroup := rg.Group("/topics")
 	{
 		topicsGroup.GET("", topicsCtrl.Index)
-		topicsGroup.POST("", middlewares.AuthJWT(), topicsCtrl.Store)
-		topicsGroup.POST("/upload-image", middlewares.AuthJWT(), topicsCtrl.UploadImage)
-		topicsGroup.PUT(":id", middlewares.AuthJWT(), topicsCtrl.Update)
+		// 创建和上传应用内容安全检查
+		topicsGroup.POST("", 
+			middlewares.AuthJWT(), 
+			middlewares.SensitiveWordFilter(),
+			topicsCtrl.Store,
+		)
+		topicsGroup.POST("/upload-image", 
+			middlewares.AuthJWT(), 
+			middlewares.ImageUploadSecurity(),
+			topicsCtrl.UploadImage,
+		)
+		// 更新也应用内容安全检查
+		topicsGroup.PUT(":id", 
+			middlewares.AuthJWT(), 
+			middlewares.SensitiveWordFilter(),
+			topicsCtrl.Update,
+		)
 		topicsGroup.DELETE(":id", middlewares.AuthJWT(), topicsCtrl.Delete)
 		topicsGroup.GET(":id", topicsCtrl.Show)
 		topicsGroup.POST(":id/like", middlewares.AuthJWT(), topicsCtrl.Like)

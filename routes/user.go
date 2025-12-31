@@ -12,11 +12,21 @@ func RegisterUserRoutes(rg *gin.RouterGroup, usersCtrl *v1.UsersController) {
 	usersGroup := rg.Group("/users")
 	{
 		usersGroup.GET("", usersCtrl.Index)
-		usersGroup.PUT("", middlewares.AuthJWT(), usersCtrl.UpdateProfile)
+		// 更新资料应用内容安全检查
+		usersGroup.PUT("", 
+			middlewares.AuthJWT(), 
+			middlewares.SensitiveWordFilter(),
+			usersCtrl.UpdateProfile,
+		)
 		usersGroup.PUT("/email", middlewares.AuthJWT(), usersCtrl.UpdateEmail)
 		usersGroup.PUT("/phone", middlewares.AuthJWT(), usersCtrl.UpdatePhone)
 		usersGroup.PUT("/password", middlewares.AuthJWT(), usersCtrl.UpdatePassword)
-		usersGroup.PUT("/avatar", middlewares.AuthJWT(), usersCtrl.UpdateAvatar)
+		// 头像上传应用安全检查
+		usersGroup.PUT("/avatar", 
+			middlewares.AuthJWT(), 
+			middlewares.ImageUploadSecurity(),
+			usersCtrl.UpdateAvatar,
+		)
 		usersGroup.POST("/:id/follow", middlewares.AuthJWT(), usersCtrl.Follow)
 		usersGroup.POST("/:id/unfollow", middlewares.AuthJWT(), usersCtrl.Unfollow)
 	}
