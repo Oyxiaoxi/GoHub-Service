@@ -309,7 +309,3 @@ wrk -t12 -c400 -d30s http://localhost:8080/api/topics
 - [ ] 验证了改进效果
 
 ---
-
-**性能目标**: 🚀 业界领先  
-**最后更新**: 2026年1月1日  
-*由GoHub Performance Team维护* ✨

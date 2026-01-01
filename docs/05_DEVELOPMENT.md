@@ -861,7 +861,3 @@ func TestConcurrent(t *testing.T) {
 - [性能优化指南](07_PERFORMANCE.md) - 性能调优技巧
 
 ---
-
-**文档版本**: v2.0  
-**最后更新**: 2026年1月1日  
-*由GoHub Development Team维护* ✨

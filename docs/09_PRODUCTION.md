@@ -254,8 +254,3 @@ redis-server
 ```
 
 ---
-
-**部署版本**: v2.0  
-**可靠性**: 99.9% SLA  
-**最后更新**: 2026年1月1日  
-*由GoHub Operations Team维护* ✨

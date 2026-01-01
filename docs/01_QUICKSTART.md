@@ -480,6 +480,3 @@ make serve
 ```
 
 ---
-
-*由GoHub Development Team维护* ✨  
-*最后更新: 2026年1月1日*

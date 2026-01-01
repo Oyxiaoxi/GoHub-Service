@@ -62,7 +62,7 @@ func (s *SyncService) SyncAllTopics(ctx context.Context, batchSize int) error {
 			topicMaps = append(topicMaps, topicMap)
 		}
 
-		if err := s.client.BulkIndex(ctx, topicMaps); err != nil {
+		if err := s.client.BulkIndex(ctx, "gohub-topics", topicMaps); err != nil {
 			log.Printf("Batch error at offset %d: %v", offset, err)
 			totalErrors += len(topicMaps)
 		} else {
@@ -103,7 +103,7 @@ func (s *SyncService) SyncTopicIncremental(ctx context.Context, sinceMinutes int
 		topicMaps = append(topicMaps, topicMap)
 	}
 
-	if err := s.client.BulkIndex(ctx, topicMaps); err != nil {
+	if err := s.client.BulkIndex(ctx, "gohub-topics", topicMaps); err != nil {
 		return fmt.Errorf("failed to sync topics: %w", err)
 	}
 

@@ -344,7 +344,3 @@ User → Roles → Permissions → 访问控制
 ```
 
 ---
-
-**架构版本**: v2.0  
-**最后更新**: 2026年1月1日  
-*由GoHub Architecture Team维护* ✨

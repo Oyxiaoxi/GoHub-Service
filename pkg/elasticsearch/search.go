@@ -285,3 +285,49 @@ func (ss *SearchService) IndexTopic(ctx context.Context, topic map[string]interf
 func (ss *SearchService) RemoveTopic(ctx context.Context, topicID string) error {
 	return ss.client.DeleteTopic(ctx, topicID)
 }
+
+// Search 通用搜索方法
+func (ss *SearchService) Search(ctx context.Context, indexName string, query map[string]interface{}) ([]SearchResult, error) {
+	results, err := ss.client.Search(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+
+	// 解析结果
+	topics, _ := ss.parseResults(results)
+	return topics, nil
+}
+
+// Aggregate 通用聚合方法
+func (ss *SearchService) Aggregate(ctx context.Context, indexName string, aggs map[string]interface{}) (map[string]interface{}, error) {
+	return ss.client.Aggregate(ctx, indexName, aggs)
+}
+
+// Suggest 通用建议方法
+func (ss *SearchService) Suggest(ctx context.Context, indexName string, text string) ([]string, error) {
+	result, err := ss.client.Suggest(ctx, indexName, text)
+	if err != nil {
+		return nil, err
+	}
+
+	suggestions := []string{}
+	if suggest, ok := result["suggest"].(map[string]interface{}); ok {
+		if titleSuggest, ok := suggest["title-suggest"].([]interface{}); ok {
+			for _, item := range titleSuggest {
+				if itemMap, ok := item.(map[string]interface{}); ok {
+					if options, ok := itemMap["options"].([]interface{}); ok {
+						for _, opt := range options {
+							if optMap, ok := opt.(map[string]interface{}); ok {
+								if text, ok := optMap["text"].(string); ok {
+									suggestions = append(suggestions, text)
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	return suggestions, nil
+}

@@ -86,6 +86,12 @@ func (im *IndexManager) TopicMapping() map[string]interface{} {
 	}
 }
 
+// CreateIndex 创建索引（通用方法）
+func (im *IndexManager) CreateIndex(ctx context.Context, indexName string) error {
+	mapping := im.TopicMapping()
+	return im.client.CreateIndex(ctx, indexName, mapping)
+}
+
 // CreateTopicIndex 创建话题索引
 func (im *IndexManager) CreateTopicIndex(ctx context.Context) error {
 	mapping := im.TopicMapping()

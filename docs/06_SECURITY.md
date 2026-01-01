@@ -823,7 +823,3 @@ func (s *AuthService) CheckPermission(userID int64, permission string) bool {
 - [生产部署](09_PRODUCTION.md) - 安全的部署配置
 
 ---
-
-**安全级别**: 🔒 高  
-**最后更新**: 2026年1月1日  
-*由GoHub Security Team维护* ✨

@@ -266,7 +266,3 @@ if !topicPolicy.CanUpdate(userID, topic) {
 ```
 
 ---
-
-**权限系统版本**: v2.0  
-**最后更新**: 2026年1月1日  
-*由GoHub Security Team维护* ✨

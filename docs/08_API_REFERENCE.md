@@ -1187,7 +1187,3 @@ const searchTopics = async (token, query) => {
 - [搜索功能](10_ELASTICSEARCH.md) - 全文搜索集成
 
 ---
-
-**API版本**: v2.0  
-**最后更新**: 2026年1月1日  
-*由GoHub Development Team维护* ✨
