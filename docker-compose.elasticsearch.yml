@@ -1,0 +1,110 @@
+version: '3.8'
+
+services:
+  # Elasticsearch 节点 1 (主节点)
+  elasticsearch-1:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.5.0
+    container_name: es-node-1
+    environment:
+      - node.name=es-node-1
+      - cluster.name=gohub-cluster
+      - discovery.seed_hosts=elasticsearch-2,elasticsearch-3
+      - cluster.initial_master_nodes=es-node-1,es-node-2,es-node-3
+      - xpack.security.enabled=false
+      - xpack.security.enrollment.enabled=false
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+    ports:
+      - "9200:9200"
+    volumes:
+      - es-data-1:/usr/share/elasticsearch/data
+    networks:
+      - gohub-network
+    healthcheck:
+      test: curl -s http://localhost:9200 >/dev/null || exit 1
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Elasticsearch 节点 2
+  elasticsearch-2:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.5.0
+    container_name: es-node-2
+    environment:
+      - node.name=es-node-2
+      - cluster.name=gohub-cluster
+      - discovery.seed_hosts=elasticsearch-1,elasticsearch-3
+      - cluster.initial_master_nodes=es-node-1,es-node-2,es-node-3
+      - xpack.security.enabled=false
+      - xpack.security.enrollment.enabled=false
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+    ports:
+      - "9201:9200"
+    volumes:
+      - es-data-2:/usr/share/elasticsearch/data
+    networks:
+      - gohub-network
+    depends_on:
+      - elasticsearch-1
+    healthcheck:
+      test: curl -s http://localhost:9200 >/dev/null || exit 1
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Elasticsearch 节点 3
+  elasticsearch-3:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.5.0
+    container_name: es-node-3
+    environment:
+      - node.name=es-node-3
+      - cluster.name=gohub-cluster
+      - discovery.seed_hosts=elasticsearch-1,elasticsearch-2
+      - cluster.initial_master_nodes=es-node-1,es-node-2,es-node-3
+      - xpack.security.enabled=false
+      - xpack.security.enrollment.enabled=false
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+    ports:
+      - "9202:9200"
+    volumes:
+      - es-data-3:/usr/share/elasticsearch/data
+    networks:
+      - gohub-network
+    depends_on:
+      - elasticsearch-1
+    healthcheck:
+      test: curl -s http://localhost:9200 >/dev/null || exit 1
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Kibana 可视化工具
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.5.0
+    container_name: kibana
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch-1:9200
+      - ELASTICSEARCH_USERNAME=elastic
+      - ELASTICSEARCH_PASSWORD=changeme
+    ports:
+      - "5601:5601"
+    networks:
+      - gohub-network
+    depends_on:
+      - elasticsearch-1
+    healthcheck:
+      test: curl -s http://localhost:5601 >/dev/null || exit 1
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  es-data-1:
+    driver: local
+  es-data-2:
+    driver: local
+  es-data-3:
+    driver: local
+
+networks:
+  gohub-network:
+    driver: bridge
