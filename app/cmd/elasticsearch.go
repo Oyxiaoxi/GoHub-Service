@@ -26,8 +26,8 @@ var esSyncCmd = &cobra.Command{
 	Long:  "完整同步MySQL数据库中的所有话题到Elasticsearch",
 	Run: func(cmd *cobra.Command, args []string) {
 		// 初始化数据库连接
-		bootstrap.LoadDB()
-		bootstrap.LoadLogger()
+		bootstrap.SetupDB()
+		bootstrap.SetupLogger()
 
 		// 创建ES客户端
 		addresses := []string{"http://localhost:9200"}
@@ -58,8 +58,8 @@ var esIncrementalCmd = &cobra.Command{
 	Long:  "增量同步最近修改的话题到Elasticsearch",
 	Run: func(cmd *cobra.Command, args []string) {
 		// 初始化数据库连接
-		bootstrap.LoadDB()
-		bootstrap.LoadLogger()
+		bootstrap.SetupDB()
+		bootstrap.SetupLogger()
 
 		// 创建ES客户端
 		addresses := []string{"http://localhost:9200"}
@@ -96,8 +96,8 @@ var esStatusCmd = &cobra.Command{
 	Long:  "检查MySQL和Elasticsearch之间的同步状态",
 	Run: func(cmd *cobra.Command, args []string) {
 		// 初始化数据库连接
-		bootstrap.LoadDB()
-		bootstrap.LoadLogger()
+		bootstrap.SetupDB()
+		bootstrap.SetupLogger()
 
 		// 创建ES客户端
 		addresses := []string{"http://localhost:9200"}
@@ -135,8 +135,8 @@ var esReindexCmd = &cobra.Command{
 	Long:  "删除旧索引并重新创建，然后同步所有话题",
 	Run: func(cmd *cobra.Command, args []string) {
 		// 初始化数据库连接
-		bootstrap.LoadDB()
-		bootstrap.LoadLogger()
+		bootstrap.SetupDB()
+		bootstrap.SetupLogger()
 
 		// 创建ES客户端
 		addresses := []string{"http://localhost:9200"}
@@ -161,6 +161,12 @@ var esReindexCmd = &cobra.Command{
 }
 
 func init() {
+	// 添加参数
+	esIncrementalCmd.Flags().IntP("minutes", "m", 30, "Sync topics modified in the last N minutes")
+}
+
+// RegisterElasticsearchCommands 注册Elasticsearch相关命令
+func RegisterElasticsearchCommands(rootCmd *cobra.Command) {
 	// 添加ES命令到根命令
 	rootCmd.AddCommand(esCmd)
 
@@ -169,7 +175,4 @@ func init() {
 	esCmd.AddCommand(esIncrementalCmd)
 	esCmd.AddCommand(esStatusCmd)
 	esCmd.AddCommand(esReindexCmd)
-
-	// 添加参数
-	esIncrementalCmd.Flags().IntP("minutes", "m", 30, "Sync topics modified in the last N minutes")
 }

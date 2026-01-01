@@ -135,15 +135,14 @@ func (s *SyncService) topicToMap(t topic.Topic) map[string]interface{} {
 		"id":             t.ID,
 		"title":          t.Title,
 		"content":        t.Body,
-		"description":    t.Description,
 		"category_id":    t.CategoryID,
 		"user_id":        t.UserID,
 		"status":         "published", // 假设已发布
 		"created_at":     t.CreatedAt.Format("2006-01-02T15:04:05Z"),
 		"updated_at":     t.UpdatedAt.Format("2006-01-02T15:04:05Z"),
-		"likes_count":    t.LikesCount,
-		"views_count":    t.ViewsCount,
-		"comments_count": t.CommentsCount,
+		"likes_count":    t.LikeCount,
+		"views_count":    t.ViewCount,
+		"favorite_count": t.FavoriteCount,
 	}
 }
 

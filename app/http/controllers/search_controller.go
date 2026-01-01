@@ -7,7 +7,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"GoHub-Service/app/models"
 	"GoHub-Service/pkg/elasticsearch"
 	"GoHub-Service/pkg/response"
 )
@@ -71,15 +70,15 @@ func (sc *SearchController) SearchTopics(c *gin.Context) {
 
 	results, total, err := sc.searchService.SearchTopics(ctx, req)
 	if err != nil {
-		response.Error(c, "搜索失败", err.Error())
+		response.ApiError(c, 500, response.CodeServerError, "搜索失败")
 		return
 	}
 
 	// 返回结果
-	response.Success(c, gin.H{
-		"items": results,
-		"total": total,
-		"page": pageInt,
+	response.ApiSuccess(c, gin.H{
+		"items":     results,
+		"total":     total,
+		"page":      pageInt,
 		"page_size": pageSizeInt,
 	})
 }
@@ -104,7 +103,7 @@ func (sc *SearchController) SearchSuggestions(c *gin.Context) {
 	}
 
 	if query == "" {
-		response.Error(c, "缺少搜索词", "query parameter is required")
+		response.ApiError(c, 400, response.CodeInvalidParams, "query parameter is required")
 		return
 	}
 
@@ -113,11 +112,11 @@ func (sc *SearchController) SearchSuggestions(c *gin.Context) {
 
 	suggestions, err := sc.searchService.SuggestTopics(ctx, query, limit)
 	if err != nil {
-		response.Error(c, "获取建议失败", err.Error())
+		response.ApiError(c, 500, response.CodeServerError, "获取建议失败")
 		return
 	}
 
-	response.Success(c, gin.H{
+	response.ApiSuccess(c, gin.H{
 		"suggestions": suggestions,
 	})
 }
@@ -144,11 +143,11 @@ func (sc *SearchController) GetHotTopics(c *gin.Context) {
 
 	topics, err := sc.searchService.GetHotTopics(ctx, limit)
 	if err != nil {
-		response.Error(c, "获取热门话题失败", err.Error())
+		response.ApiError(c, 500, response.CodeServerError, "获取热门话题失败")
 		return
 	}
 
-	response.Success(c, gin.H{
+	response.ApiSuccess(c, gin.H{
 		"items": topics,
 	})
 }
