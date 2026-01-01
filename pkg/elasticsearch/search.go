@@ -221,7 +221,7 @@ func (ss *SearchService) SuggestTopics(ctx context.Context, prefix string, limit
 }
 
 // GetHotTopics 获取热门话题
-func (ss *SearchService) GetHotTopics(ctx context.Context, categoryID string, limit int) ([]SearchResult, error) {
+func (ss *SearchService) GetHotTopics(ctx context.Context, limit int) ([]SearchResult, error) {
 	query := map[string]interface{}{
 		"size": limit,
 		"query": map[string]interface{}{
@@ -243,15 +243,6 @@ func (ss *SearchService) GetHotTopics(ctx context.Context, categoryID string, li
 				"views_count": map[string]string{"order": "desc"},
 			},
 		},
-	}
-
-	if categoryID != "" {
-		filters := query["query"].(map[string]interface{})["bool"].(map[string]interface{})["must"].([]map[string]interface{})
-		filters = append(filters, map[string]interface{}{
-			"term": map[string]interface{}{
-				"category_id": categoryID,
-			},
-		})
 	}
 
 	results, err := ss.client.Search(ctx, query)
@@ -283,4 +274,14 @@ func (ss *SearchService) CountTopics(ctx context.Context, req SearchRequest) (in
 	}
 
 	return 0, fmt.Errorf("failed to parse total count")
+}
+
+// IndexTopic 索引单个话题文档 (由控制器调用)
+func (ss *SearchService) IndexTopic(ctx context.Context, topic map[string]interface{}) error {
+	return ss.client.IndexTopic(ctx, topic)
+}
+
+// RemoveTopic 从搜索索引删除话题 (由控制器调用)
+func (ss *SearchService) RemoveTopic(ctx context.Context, topicID string) error {
+	return ss.client.DeleteTopic(ctx, topicID)
 }
