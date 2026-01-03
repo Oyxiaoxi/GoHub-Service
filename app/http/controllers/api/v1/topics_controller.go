@@ -28,27 +28,18 @@ func NewTopicsController() *TopicsController {
 	}
 }
 
-// Index godoc
-// @Summary 获取话题列表
-// @Description 分页获取所有话题
-// @Tags topics
-// @Accept json
-// @Produce json
-// @Param page query int false "页码" default(1)
-// @Param per_page query int false "每页数量" default(10)
-// @Success 200 {object} map[string]interface{} "data: 话题列表, pager: 分页信息"
-// @Failure 500 {object} map[string]interface{}
-// @Router /topics [get]
 // Index 话题列表
 // @Summary 获取话题列表
-// @Description 获取话题列表，支持分页
+// @Description 分页获取话题列表，支持按分类筛选
 // @Tags 话题管理
 // @Accept json
 // @Produce json
 // @Param page query int false "页码" default(1)
 // @Param per_page query int false "每页数量" default(10)
-// @Success 200 {object} map[string]interface{} "成功"
-// @Router /api/v1/topics [get]
+// @Param category_id query string false "分类ID"
+// @Param order query string false "排序方式" default(created_at)
+// @Success 200 {object} response.Response "成功"
+// @Router /topics [get]
 func (ctrl *TopicsController) Index(c *gin.Context) {
 	request := requests.PaginationRequest{}
 	if ok := requests.Validate(c, &request, requests.Pagination); !ok {
@@ -67,16 +58,15 @@ func (ctrl *TopicsController) Index(c *gin.Context) {
 	})
 }
 
-// Show godoc
+// Show 话题详情
 // @Summary 获取话题详情
-// @Description 根据ID获取话题详细信息
-// @Tags topics
+// @Description 根据ID获取话题详细信息，自动增加浏览次数
+// @Tags 话题管理
 // @Accept json
 // @Produce json
 // @Param id path string true "话题ID"
-// @Success 200 {object} topic.Topic
-// @Failure 404 {object} map[string]interface{}
-// @Failure 500 {object} map[string]interface{}
+// @Success 200 {object} response.Response "成功"
+// @Failure 404 {object} response.Response "话题不存在"
 // @Router /topics/{id} [get]
 // Show 话题详情
 // @Summary 获取话题详情
@@ -87,7 +77,6 @@ func (ctrl *TopicsController) Index(c *gin.Context) {
 // @Param id path string true "话题ID"
 // @Success 200 {object} topic.Topic "成功"
 // @Failure 404 {object} map[string]interface{} "话题不存在"
-// @Router /api/v1/topics/{id} [get]
 func (ctrl *TopicsController) Show(c *gin.Context) {
 	topicModel, err := ctrl.topicService.GetByID(c.Param("id"))
 	if err != nil {
@@ -102,31 +91,18 @@ func (ctrl *TopicsController) Show(c *gin.Context) {
 	response.Data(c, topicModel)
 }
 
-// Store godoc
-// @Summary 创建话题
-// @Description 创建新的话题
-// @Tags topics
-// @Accept json
-// @Produce json
-// @Security BearerAuth
-// @Param topic body requests.TopicRequest true "话题信息"
-// @Success 201 {object} topic.Topic
-// @Failure 400 {object} map[string]interface{}
-// @Failure 401 {object} map[string]interface{}
-// @Failure 500 {object} map[string]interface{}
-// @Router /topics [post]
 // Store 创建话题
 // @Summary 创建新话题
-// @Description 创建一个新的话题
+// @Description 创建一个新的话题，需要登录
 // @Tags 话题管理
 // @Accept json
 // @Produce json
 // @Security Bearer
 // @Param topic body requests.TopicRequest true "话题信息"
-// @Success 201 {object} topic.Topic "创建成功"
-// @Failure 422 {object} map[string]interface{} "验证失败"
-// @Failure 500 {object} map[string]interface{} "服务器错误"
-// @Router /api/v1/topics [post]
+// @Success 201 {object} response.Response "创建成功"
+// @Failure 401 {object} response.Response "未授权"
+// @Failure 422 {object} response.Response "验证失败"
+// @Router /topics [post]
 func (ctrl *TopicsController) Store(c *gin.Context) {
 	request := requests.TopicRequest{}
 	if ok := requests.Validate(c, &request, requests.TopicSave); !ok {
@@ -152,12 +128,20 @@ func (ctrl *TopicsController) Store(c *gin.Context) {
 	response.Created(c, topicModel)
 }
 
-// Update godoc
-// @Summary 更新话题
-// @Description 更新话题信息（需要所有权）
-// @Tags topics
+// Update 更新话题
+// @Summary 更新话题信息
+// @Description 更新指定话题的信息，需要是话题作者
+// @Tags 话题管理
 // @Accept json
 // @Produce json
+// @Security Bearer
+// @Param id path string true "话题ID"
+// @Param topic body requests.TopicRequest true "话题信息"
+// @Success 200 {object} response.Response "更新成功"
+// @Failure 403 {object} response.Response "无权限"
+// @Failure 404 {object} response.Response "话题不存在"
+// @Failure 422 {object} response.Response "验证失败"
+// @Router /topics/{id} [put]
 // @Security BearerAuth
 // @Param id path string true "话题ID"
 // @Param topic body requests.TopicRequest true "话题信息"

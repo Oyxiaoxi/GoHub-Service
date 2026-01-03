@@ -23,8 +23,17 @@ func NewCategoriesController() *CategoriesController {
         categoryService: services.NewCategoryService(),
     }
 }
-
-func (ctrl *CategoriesController) Store(c *gin.Context) {
+// Store 创建分类
+// @Summary 创建新分类
+// @Description 创建一个新的话题分类
+// @Tags 分类管理
+// @Accept json
+// @Produce json
+// @Security Bearer
+// @Param category body requests.CategoryRequest true "分类信息"
+// @Success 201 {object} response.Response "成功"
+// @Failure 422 {object} response.Response "验证失败"
+// @Router /categories [post]func (ctrl *CategoriesController) Store(c *gin.Context) {
     request := requests.CategoryRequest{}
     if ok := requests.Validate(c, &request, requests.CategorySave); !ok {
         return
@@ -48,8 +57,19 @@ func (ctrl *CategoriesController) Store(c *gin.Context) {
 
     response.Created(c, categoryModel)
 }
-
-func (ctrl *CategoriesController) Update(c *gin.Context) {
+// Update 更新分类
+// @Summary 更新分类信息
+// @Description 更新指定分类的信息
+// @Tags 分类管理
+// @Accept json
+// @Produce json
+// @Security Bearer
+// @Param id path string true "分类ID"
+// @Param category body requests.CategoryRequest true "分类信息"
+// @Success 200 {object} response.Response "成功"
+// @Failure 404 {object} response.Response "分类不存在"
+// @Failure 422 {object} response.Response "验证失败"
+// @Router /categories/{id} [put]func (ctrl *CategoriesController) Update(c *gin.Context) {
     // 表单验证
     request := requests.CategoryRequest{}
     if ok := requests.Validate(c, &request, requests.CategorySave); !ok {

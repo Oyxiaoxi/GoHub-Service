@@ -25,14 +25,15 @@ func NewCommentsController() *CommentsController {
 
 // Index 评论列表
 // @Summary 获取评论列表
-// @Description 获取评论列表，支持分页
+// @Description 获取评论列表，支持分页和按话题筛选
 // @Tags 评论管理
 // @Accept json
 // @Produce json
 // @Param page query int false "页码" default(1)
 // @Param per_page query int false "每页数量" default(15)
-// @Success 200 {object} map[string]interface{} "成功"
-// @Router /api/v1/comments [get]
+// @Param topic_id query string false "话题ID"
+// @Success 200 {object} response.Response "成功"
+// @Router /comments [get]
 func (ctrl *CommentsController) Index(c *gin.Context) {
 	request := requests.PaginationRequest{}
 	if ok := requests.Validate(c, &request, requests.Pagination); !ok {
@@ -56,14 +57,14 @@ func (ctrl *CommentsController) Index(c *gin.Context) {
 
 // Show 评论详情
 // @Summary 获取评论详情
-// @Description 根据ID获取评论详情
+// @Description 根据ID获取评论详细信息
 // @Tags 评论管理
 // @Accept json
 // @Produce json
 // @Param id path string true "评论ID"
-// @Success 200 {object} map[string]interface{} "成功"
-// @Failure 404 {object} map[string]interface{} "评论不存在"
-// @Router /api/v1/comments/{id} [get]
+// @Success 200 {object} response.Response "成功"
+// @Failure 404 {object} response.Response "评论不存在"
+// @Router /comments/{id} [get]
 func (ctrl *CommentsController) Show(c *gin.Context) {
 	// 从 Gin Context 创建请求 Context
 	requestCtx := ctx.FromGinContext(c)
@@ -82,17 +83,17 @@ func (ctrl *CommentsController) Show(c *gin.Context) {
 }
 
 // Store 创建评论
-// @Summary 创建评论
-// @Description 创建新评论
+// @Summary 创建新评论
+// @Description 创建一个新的评论，支持回复评论
 // @Tags 评论管理
 // @Accept json
 // @Produce json
-// @Param Authorization header string true "Bearer 用户令牌"
+// @Security Bearer
 // @Param comment body requests.CommentRequest true "评论信息"
-// @Success 201 {object} map[string]interface{} "成功"
-// @Failure 422 {object} map[string]interface{} "验证错误"
-// @Router /api/v1/comments [post]
-// @Security ApiKeyAuth
+// @Success 201 {object} response.Response "创建成功"
+// @Failure 401 {object} response.Response "未授权"
+// @Failure 422 {object} response.Response "验证失败"
+// @Router /comments [post]
 func (ctrl *CommentsController) Store(c *gin.Context) {
 	request := requests.CommentRequest{}
 	if ok := requests.Validate(c, &request, requests.CommentSave); !ok {
@@ -124,19 +125,19 @@ func (ctrl *CommentsController) Store(c *gin.Context) {
 }
 
 // Update 更新评论
-// @Summary 更新评论
-// @Description 更新评论内容
+// @Summary 更新评论内容
+// @Description 更新指定评论的内容，需要是评论作者
 // @Tags 评论管理
 // @Accept json
 // @Produce json
-// @Param Authorization header string true "Bearer 用户令牌"
+// @Security Bearer
 // @Param id path string true "评论ID"
 // @Param comment body requests.CommentRequest true "评论信息"
-// @Success 200 {object} map[string]interface{} "成功"
-// @Failure 404 {object} map[string]interface{} "评论不存在"
-// @Failure 422 {object} map[string]interface{} "验证错误"
-// @Router /api/v1/comments/{id} [put]
-// @Security ApiKeyAuth
+// @Success 200 {object} response.Response "更新成功"
+// @Failure 403 {object} response.Response "无权限"
+// @Failure 404 {object} response.Response "评论不存在"
+// @Failure 422 {object} response.Response "验证失败"
+// @Router /comments/{id} [put]
 func (ctrl *CommentsController) Update(c *gin.Context) {
 	request := requests.CommentRequest{}
 	if ok := requests.Validate(c, &request, requests.CommentUpdate); !ok {
