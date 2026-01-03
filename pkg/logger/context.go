@@ -68,7 +68,10 @@ func LogWithRequestID(c *gin.Context, level string, message string, fields ...za
 		Warn(message, logFields...)
 	case "error":
 		Error(message, logFields...)
-	
+	default:
+		Info(message, logFields...)
+	}
+}
 
 // ContextLogger 带 context 的日志记录器
 type ContextLogger struct {
@@ -167,7 +170,4 @@ func FatalContext(ctx context.Context, msg string, fields ...zapcore.Field) {
 
 func PanicContext(ctx context.Context, msg string, fields ...zapcore.Field) {
 	WithContext(ctx).Panic(msg, fields...)
-}default:
-		Info(message, logFields...)
-	}
 }
