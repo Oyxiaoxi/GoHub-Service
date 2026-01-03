@@ -1,6 +1,6 @@
 # 📚 GoHub-Service 文档中心
 
-**版本**: v2.3 | **更新**: 2026年1月3日 | **文档数**: 16 个 | **零冗余** ✅
+**版本**: v2.4 | **更新**: 2026年1月3日 | **文档数**: 17 个 | **零冗余** ✅
 
 ## 🚀 按角色快速导航
 
@@ -37,7 +37,8 @@
 ### 性能优化（进阶） ⭐️
 - **[13_DATABASE_OPTIMIZATION.md](13_DATABASE_OPTIMIZATION.md)** - 数据库查询优化，批量操作
 - **[14_CONTEXT_OPTIMIZATION.md](14_CONTEXT_OPTIMIZATION.md)** - Context 传递优化，超时控制
-- **[15_ERROR_HANDLING.md](15_ERROR_HANDLING.md)** - 错误处理机制，错误码管理 🆕
+- **[15_ERROR_HANDLING.md](15_ERROR_HANDLING.md)** - 错误处理机制，错误码管理
+- **[16_CONCURRENCY_SAFETY.md](16_CONCURRENCY_SAFETY.md)** - 并发安全，防缓存击穿 🆕
 
 ## 🎓 推荐学习路径
 

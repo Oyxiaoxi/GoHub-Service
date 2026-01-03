@@ -3,11 +3,14 @@ package services
 
 import (
 	"context"
+	"fmt"
+
 	"GoHub-Service/app/cache"
 	"GoHub-Service/app/models/comment"
 	"GoHub-Service/app/repositories"
 	apperrors "GoHub-Service/pkg/errors"
 	"GoHub-Service/pkg/paginator"
+	"GoHub-Service/pkg/singleflight"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -19,6 +22,7 @@ type CommentService struct {
 	cache     *cache.CommentCache
 	notifSvc  *NotificationService
 	topicRepo repositories.TopicRepository
+	sfGroup   singleflight.Group // singleflight 防止缓存击穿
 }
 
 // NewCommentService 创建评论服务实例
@@ -94,30 +98,45 @@ func (s *CommentService) toResponseDTOList(comments []comment.Comment) []Comment
 	return dtos
 }
 
-// GetByID 根据ID获取评论
+// GetByID 根据ID获取评论（使用 singleflight 防止缓存击穿）
 func (s *CommentService) GetByID(ctx context.Context, id string) (*CommentResponseDTO, *apperrors.AppError) {
-	// 尝试从缓存获取
-	if s.cache != nil {
-		commentModel, err := s.cache.GetByID(ctx, id)
-		if err == nil && commentModel != nil {
-			return s.toResponseDTO(commentModel), nil
+	// 使用 singleflight 确保同一时间只有一个请求去数据库查询
+	key := fmt.Sprintf("comment:%s", id)
+	
+	result, err := s.sfGroup.Do(key, func() (interface{}, error) {
+		// 尝试从缓存获取
+		if s.cache != nil {
+			commentModel, err := s.cache.GetByID(ctx, id)
+			if err == nil && commentModel != nil {
+				return commentModel, nil
+			}
 		}
-	}
 
-	// 从仓储获取
-	commentModel, err := s.repo.GetByID(ctx, id)
+		// 从仓储获取
+		commentModel, err := s.repo.GetByID(ctx, id)
+		if err != nil {
+			return nil, err
+		}
+		if commentModel == nil {
+			return nil, apperrors.NotFoundError("评论")
+		}
+
+		// 更新缓存
+		if s.cache != nil {
+			s.cache.Set(ctx, commentModel)
+		}
+
+		return commentModel, nil
+	})
+
 	if err != nil {
+		if appErr, ok := err.(*apperrors.AppError); ok {
+			return nil, appErr
+		}
 		return nil, apperrors.DatabaseError("获取评论", err)
 	}
-	if commentModel == nil {
-		return nil, apperrors.NotFoundError("评论")
-	}
 
-	// 更新缓存
-	if s.cache != nil {
-		s.cache.Set(ctx, commentModel)
-	}
-
+	commentModel := result.(*comment.Comment)
 	return s.toResponseDTO(commentModel), nil
 }
 

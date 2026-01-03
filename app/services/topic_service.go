@@ -3,11 +3,14 @@ package services
 
 import (
 	"context"
+	"fmt"
+
 	"GoHub-Service/app/cache"
 	"GoHub-Service/app/models/topic"
 	"GoHub-Service/app/repositories"
 	apperrors "GoHub-Service/pkg/errors"
 	"GoHub-Service/pkg/paginator"
+	"GoHub-Service/pkg/singleflight"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -15,8 +18,9 @@ import (
 
 // TopicService Topic服务
 type TopicService struct {
-	repo  repositories.TopicRepository
-	cache *cache.TopicCache
+	repo    repositories.TopicRepository
+	cache   *cache.TopicCache
+	sfGroup singleflight.Group // singleflight 防止缓存击穿
 }
 
 // NewTopicService 创建Topic服务实例
@@ -98,25 +102,44 @@ func (s *TopicService) toResponseDTOList(topics []topic.Topic) []TopicResponseDT
 	return dtos
 }
 
-// GetByID 根据ID获取话题
+// GetByID 根据ID获取话题（使用 singleflight 防止缓存击穿）
 func (s *TopicService) GetByID(id string) (*TopicResponseDTO, *apperrors.AppError) {
-	if s.cache != nil {
-		topicModel, err := s.cache.GetByID(context.Background(), id)
-		if err == nil && topicModel != nil {
-			return s.toResponseDTO(topicModel), nil
+	key := fmt.Sprintf("topic:%s", id)
+	
+	result, err := s.sfGroup.Do(key, func() (interface{}, error) {
+		// 尝试从缓存获取
+		if s.cache != nil {
+			topicModel, err := s.cache.GetByID(context.Background(), id)
+			if err == nil && topicModel != nil {
+				return topicModel, nil
+			}
 		}
-	}
 
-	topicModel, err := s.repo.GetByID(context.Background(), id)
+		// 从仓储获取
+		topicModel, err := s.repo.GetByID(context.Background(), id)
+		if err != nil {
+			return nil, err
+		}
+		if topicModel == nil {
+			return nil, apperrors.NotFoundError("话题").WithDetails(map[string]interface{}{"topic_id": id})
+		}
+		
+		// 更新缓存
+		if s.cache != nil {
+			s.cache.Set(context.Background(), topicModel)
+		}
+		
+		return topicModel, nil
+	})
+	
 	if err != nil {
+		if appErr, ok := err.(*apperrors.AppError); ok {
+			return nil, appErr
+		}
 		return nil, apperrors.WrapError(err, "获取话题失败")
 	}
-	if topicModel == nil {
-		return nil, apperrors.NotFoundError("话题").WithDetails(map[string]interface{}{"topic_id": id})
-	}
-	if s.cache != nil {
-		s.cache.Set(context.Background(), topicModel)
-	}
+	
+	topicModel := result.(*topic.Topic)
 	return s.toResponseDTO(topicModel), nil
 }
 
