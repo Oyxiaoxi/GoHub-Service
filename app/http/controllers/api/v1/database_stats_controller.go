@@ -1,5 +1,5 @@
-// Package controllers 数据库监控控制器
-package controllers
+// Package v1 数据库监控控制器
+package v1
 
 import (
 	"GoHub-Service/pkg/database"

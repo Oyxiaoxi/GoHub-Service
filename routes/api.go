@@ -47,6 +47,9 @@ func RegisterAPIRoutes(r *gin.Engine) {
 
 	// 数据库监控相关
 	RegisterDatabaseStatsRoutes(r)
+	
+	// 缓存监控相关
+	RegisterCacheMonitorRoutes(r)
 
 	// Auth 路由组
 	authGroup := v1.Group("/auth", middlewares.LimitIP(config.GetString("limiter.auth_ip_rate", "1000-H")))
