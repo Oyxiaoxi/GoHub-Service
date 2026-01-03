@@ -96,10 +96,6 @@ func (s *TopicService) toResponseDTO(t *topic.Topic) *TopicResponseDTO {
 func (s *TopicService) toResponseDTOList(topics []topic.Topic) []TopicResponseDTO {
 	return s.mapper.ToDTOList(topics)
 }
-		}
-	}
-	return dtos
-}
 
 // GetByID 根据ID获取话题（使用 singleflight 防止缓存击穿）
 func (s *TopicService) GetByID(id string) (*TopicResponseDTO, *apperrors.AppError) {

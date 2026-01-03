@@ -2,13 +2,19 @@
 package services
 
 import (
+	"context"
+	"fmt"
+	"time"
+
 	"GoHub-Service/app/models/user"
 	"GoHub-Service/app/repositories"
 	apperrors "GoHub-Service/pkg/errors"
+	"GoHub-Service/pkg/mapper"
 	"GoHub-Service/pkg/paginator"
-	"fmt"
+	"GoHub-Service/pkg/resource"
+
 	"github.com/gin-gonic/gin"
-	"time"
+	"go.uber.org/zap"
 )
 
 // UpdateProfile 更新当前用户信息，并在成功时刷新缓存，确保后续读取不命中旧值.
@@ -27,13 +33,29 @@ func (s *UserService) UpdateProfile(currentUser *user.User, name, city, introduc
 
 // UserService 负责用户的读写操作及缓存一致性处理.
 type UserService struct {
-	repo repositories.UserRepository
+	repo   repositories.UserRepository
+	mapper mapper.Mapper[user.User, UserResponseDTO] // 使用泛型Mapper消除DTO转换重复
+	logger *zap.Logger
 }
 
 // NewUserService 构造用户服务，默认使用数据库+缓存仓储实现.
 func NewUserService() *UserService {
+	// 定义DTO转换函数（只需一次）
+	converter := func(u *user.User) *UserResponseDTO {
+		return &UserResponseDTO{
+			ID:        u.GetStringID(),
+			Name:      u.Name,
+			Email:     u.Email,
+			Phone:     u.Phone,
+			CreatedAt: u.CreatedAt,
+			UpdatedAt: u.UpdatedAt,
+		}
+	}
+
 	return &UserService{
-		repo: repositories.NewUserRepository(),
+		repo:   repositories.NewUserRepository(),
+		mapper: mapper.NewSimpleMapper(converter),
+		logger: zap.L(),
 	}
 }
 
@@ -68,41 +90,31 @@ type UserListResponseDTO struct {
 	Paging *paginator.Paging `json:"paging"`
 }
 
-// toResponseDTO 将User模型转换为响应DTO
+// toResponseDTO 使用Mapper将User模型转换为响应DTO
+// 优化：使用泛型Mapper消除重复代码
 func (s *UserService) toResponseDTO(u *user.User) *UserResponseDTO {
-	return &UserResponseDTO{
-		ID:        u.GetStringID(),
-		Name:      u.Name,
-		Email:     u.Email,
-		Phone:     u.Phone,
-		CreatedAt: u.CreatedAt,
-		UpdatedAt: u.UpdatedAt,
-	}
+	return s.mapper.ToDTO(u)
 }
 
-// toResponseDTOList 将User模型列表转换为响应DTO列表
-// 优化：使用索引访问避免结构体拷贝
+// toResponseDTOList 使用Mapper将User模型列表转换为响应DTO列表
+// 优化：使用泛型Mapper消除重复代码，自动优化内存拷贝
 func (s *UserService) toResponseDTOList(users []user.User) []UserResponseDTO {
-	dtos := make([]UserResponseDTO, len(users))
-	for i := range users {
-		dtos[i] = UserResponseDTO{
-			ID:        users[i].GetStringID(),
-			Name:      users[i].Name,
-			Email:     users[i].Email,
-			Phone:     users[i].Phone,
-			CreatedAt: users[i].CreatedAt,
-			UpdatedAt: users[i].UpdatedAt,
-		}
-	}
-	return dtos
+	return s.mapper.ToDTOList(users)
 }
 
 // GetByID 获取单个用户，优先命中缓存，失败时返回包装后的业务错误.
+// 优化：使用ContextGuard确保超时控制
 func (s *UserService) GetByID(id string) (*UserResponseDTO, *apperrors.AppError) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	guard := resource.NewContextGuard(ctx, cancel, s.logger)
+	defer guard.Release()
+
 	u, err := s.repo.GetByID(id)
 	if err != nil {
 		return nil, apperrors.WrapError(err, "获取用户失败")
 	}
+
+	guard.Cancel() // 操作完成，提前取消
 	return s.toResponseDTO(u), nil
 }
 

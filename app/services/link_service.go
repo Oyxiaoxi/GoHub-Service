@@ -2,17 +2,34 @@
 package services
 
 import (
+	"time"
+
 	"GoHub-Service/app/models/link"
 	apperrors "GoHub-Service/pkg/errors"
-	"time"
+	"GoHub-Service/pkg/mapper"
 )
 
 // LinkService 提供友情链接查询的只读服务，主要走缓存避免频繁 DB 访问.
-type LinkService struct{}
+type LinkService struct {
+	mapper mapper.Mapper[link.Link, LinkResponseDTO] // 使用泛型Mapper消除DTO转换重复
+}
 
 // NewLinkService 创建友情链接服务实例
 func NewLinkService() *LinkService {
-	return &LinkService{}
+	// 定义DTO转换函数（只需一次）
+	converter := func(l *link.Link) *LinkResponseDTO {
+		return &LinkResponseDTO{
+			ID:        l.GetStringID(),
+			Name:      l.Name,
+			URL:       l.URL,
+			CreatedAt: l.CreatedAt,
+			UpdatedAt: l.UpdatedAt,
+		}
+	}
+
+	return &LinkService{
+		mapper: mapper.NewSimpleMapper(converter),
+	}
 }
 
 // LinkResponseDTO 友情链接响应DTO
@@ -29,31 +46,16 @@ type LinkListResponseDTO struct {
 	Links []LinkResponseDTO `json:"links"`
 }
 
-// toResponseDTO 将Link模型转换为响应DTO
+// toResponseDTO 使用Mapper将Link模型转换为响应DTO
+// 优化：使用泛型Mapper消除重复代码
 func (s *LinkService) toResponseDTO(l *link.Link) *LinkResponseDTO {
-	return &LinkResponseDTO{
-		ID:        l.GetStringID(),
-		Name:      l.Name,
-		URL:       l.URL,
-		CreatedAt: l.CreatedAt,
-		UpdatedAt: l.UpdatedAt,
-	}
+	return s.mapper.ToDTO(l)
 }
 
-// toResponseDTOList 将Link模型列表转换为响应DTO列表
-// 优化：使用索引访问避免结构体拷贝
+// toResponseDTOList 使用Mapper将Link模型列表转换为响应DTO列表
+// 优化：使用泛型Mapper消除重复代码，自动优化内存拷贝
 func (s *LinkService) toResponseDTOList(links []link.Link) []LinkResponseDTO {
-	dtos := make([]LinkResponseDTO, len(links))
-	for i := range links {
-		dtos[i] = LinkResponseDTO{
-			ID:        links[i].GetStringID(),
-			Name:      links[i].Name,
-			URL:       links[i].URL,
-			CreatedAt: links[i].CreatedAt,
-			UpdatedAt: links[i].UpdatedAt,
-		}
-	}
-	return dtos
+	return s.mapper.ToDTOList(links)
 }
 
 // GetAllCached 仅从缓存拉取链接列表，缓存缺失时返回 NotFound 供上层决定回源或直接响应.

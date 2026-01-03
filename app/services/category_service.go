@@ -2,24 +2,42 @@
 package services
 
 import (
+	"time"
+
 	"GoHub-Service/app/models/category"
 	"GoHub-Service/app/repositories"
 	apperrors "GoHub-Service/pkg/errors"
+	"GoHub-Service/pkg/mapper"
 	"GoHub-Service/pkg/paginator"
-	"time"
 
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 )
 
 // CategoryService 负责分类的读写和缓存穿透保护等业务流.
 type CategoryService struct {
-	repo repositories.CategoryRepository
+	repo   repositories.CategoryRepository
+	mapper mapper.Mapper[category.Category, CategoryResponseDTO] // 使用泛型Mapper消除DTO转换重复
+	logger *zap.Logger
 }
 
 // NewCategoryService 构造分类服务，默认使用数据库+缓存仓储实现.
 func NewCategoryService() *CategoryService {
+	// 定义DTO转换函数（只需一次）
+	converter := func(c *category.Category) *CategoryResponseDTO {
+		return &CategoryResponseDTO{
+			ID:          c.GetStringID(),
+			Name:        c.Name,
+			Description: c.Description,
+			CreatedAt:   c.CreatedAt,
+			UpdatedAt:   c.UpdatedAt,
+		}
+	}
+
 	return &CategoryService{
-		repo: repositories.NewCategoryRepository(),
+		repo:   repositories.NewCategoryRepository(),
+		mapper: mapper.NewSimpleMapper(converter),
+		logger: zap.L(),
 	}
 }
 
@@ -50,31 +68,16 @@ type CategoryListResponseDTO struct {
 	Paging     *paginator.Paging     `json:"paging"`
 }
 
-// toResponseDTO 将Category模型转换为响应DTO
+// toResponseDTO 使用Mapper将Category模型转换为响应DTO
+// 优化：使用泛型Mapper消除重复代码
 func (s *CategoryService) toResponseDTO(c *category.Category) *CategoryResponseDTO {
-	return &CategoryResponseDTO{
-		ID:          c.GetStringID(),
-		Name:        c.Name,
-		Description: c.Description,
-		CreatedAt:   c.CreatedAt,
-		UpdatedAt:   c.UpdatedAt,
-	}
+	return s.mapper.ToDTO(c)
 }
 
-// toResponseDTOList 将Category模型列表转换为响应DTO列表
-// 优化：使用索引访问避免结构体拷贝
+// toResponseDTOList 使用Mapper将Category模型列表转换为响应DTO列表
+// 优化：使用泛型Mapper消除重复代码，自动优化内存拷贝
 func (s *CategoryService) toResponseDTOList(categories []category.Category) []CategoryResponseDTO {
-	dtos := make([]CategoryResponseDTO, len(categories))
-	for i := range categories {
-		dtos[i] = CategoryResponseDTO{
-			ID:          categories[i].GetStringID(),
-			Name:        categories[i].Name,
-			Description: categories[i].Description,
-			CreatedAt:   categories[i].CreatedAt,
-			UpdatedAt:   categories[i].UpdatedAt,
-		}
-	}
-	return dtos
+	return s.mapper.ToDTOList(categories)
 }
 
 // GetByID 拉取单条分类，包装仓储错误便于向上层透传.
