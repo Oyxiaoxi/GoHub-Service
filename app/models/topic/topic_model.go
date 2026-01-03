@@ -2,6 +2,8 @@
 package topic
 
 import (
+	"time"
+
 	"GoHub-Service/app/models"
 	"GoHub-Service/app/models/category"
 	"GoHub-Service/app/models/user"
@@ -20,6 +22,11 @@ type Topic struct {
 	LikeCount     int64  `json:"like_count,omitempty"`
 	FavoriteCount int64  `json:"favorite_count,omitempty"`
 	ViewCount     int64  `json:"view_count,omitempty"`
+
+	// 置顶相关字段
+	IsPinned bool       `gorm:"type:boolean;default:false;index;comment:是否置顶" json:"is_pinned,omitempty"`
+	PinnedAt *time.Time `gorm:"comment:置顶时间" json:"pinned_at,omitempty"`
+	PinnedBy uint64     `gorm:"comment:置顶操作员ID" json:"pinned_by,omitempty"`
 
 	// 通过 user_id 关联用户
 	User user.User `json:"user"`

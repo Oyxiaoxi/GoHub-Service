@@ -1,8 +1,11 @@
 package admin
 
 import (
+	"time"
+
 	"GoHub-Service/app/models/topic"
 	"GoHub-Service/app/requests"
+	"GoHub-Service/pkg/auth"
 	"GoHub-Service/pkg/database"
 	"GoHub-Service/pkg/paginator"
 	"GoHub-Service/pkg/response"
@@ -158,9 +161,23 @@ func (ctrl *TopicController) Pin(c *gin.Context) {
 		return
 	}
 
-	// TODO: 添加置顶逻辑（需要在 Topic 模型中添加 IsPinned 或 PinnedAt 字段）
-	// 例如: t.IsPinned = true
-	// t.PinnedAt = time.Now()
+	// 检查是否已经置顶
+	if t.IsPinned {
+		response.Abort422(c, gin.H{
+			"message": "话题已置顶",
+			"pinned_at": t.PinnedAt,
+		})
+		return
+	}
+
+	// 获取当前管理员ID
+	currentUser := auth.CurrentUser(c)
+
+	// 设置置顶信息
+	now := time.Now()
+	t.IsPinned = true
+	t.PinnedAt = &now
+	t.PinnedBy = currentUser.ID
 
 	if err := database.DB.Save(&t).Error; err != nil {
 		response.Abort500(c, "置顶失败")
@@ -169,6 +186,9 @@ func (ctrl *TopicController) Pin(c *gin.Context) {
 
 	response.Data(c, gin.H{
 		"message": "话题已置顶",
+		"topic_id": topicID,
+		"pinned_at": t.PinnedAt,
+		"pinned_by": t.PinnedBy,
 	})
 }
 
@@ -182,9 +202,18 @@ func (ctrl *TopicController) Unpin(c *gin.Context) {
 		return
 	}
 
-	// TODO: 添加取消置顶逻辑（需要在 Topic 模型中添加 IsPinned 或 PinnedAt 字段）
-	// 例如: t.IsPinned = false
-	// t.PinnedAt = nil
+	// 检查是否已置顶
+	if !t.IsPinned {
+		response.Abort422(c, gin.H{
+			"message": "话题未置顶",
+		})
+		return
+	}
+
+	// 清除置顶信息
+	t.IsPinned = false
+	t.PinnedAt = nil
+	t.PinnedBy = 0
 
 	if err := database.DB.Save(&t).Error; err != nil {
 		response.Abort500(c, "取消置顶失败")
@@ -193,6 +222,7 @@ func (ctrl *TopicController) Unpin(c *gin.Context) {
 
 	response.Data(c, gin.H{
 		"message": "已取消置顶",
+		"topic_id": topicID,
 	})
 }
 

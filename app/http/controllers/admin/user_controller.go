@@ -1,8 +1,11 @@
 package admin
 
 import (
+	"time"
+
 	"GoHub-Service/app/models/user"
 	"GoHub-Service/app/requests"
+	"GoHub-Service/pkg/auth"
 	"GoHub-Service/pkg/database"
 	"GoHub-Service/pkg/paginator"
 	"GoHub-Service/pkg/response"
@@ -203,10 +206,31 @@ func (ctrl *UserController) Ban(c *gin.Context) {
 		return
 	}
 
-	// TODO: 添加封禁逻辑（需要在 User 模型中添加封禁相关字段）
-	// 例如: u.IsBanned = true
-	// u.BanReason = req.Reason
-	// u.BanUntil = time.Now().Add(time.Duration(req.Days) * 24 * time.Hour)
+	// 检查是否已经被封禁
+	if u.IsBanned {
+		response.Abort422(c, gin.H{
+			"message": "用户已被封禁",
+			"banned_at": u.BannedAt,
+			"ban_reason": u.BanReason,
+		})
+		return
+	}
+
+	// 获取当前管理员ID
+	currentUser := auth.CurrentUser(c)
+
+	// 设置封禁信息
+	now := time.Now()
+	u.IsBanned = true
+	u.BannedAt = &now
+	u.BannedBy = currentUser.ID
+	u.BanReason = req.Reason
+
+	// 如果指定了天数，计算封禁截止时间
+	if req.Days > 0 {
+		banUntil := now.Add(time.Duration(req.Days) * 24 * time.Hour)
+		u.BanUntil = &banUntil
+	}
 
 	if err := database.DB.Save(&u).Error; err != nil {
 		response.Abort500(c, "封禁失败")
@@ -215,8 +239,11 @@ func (ctrl *UserController) Ban(c *gin.Context) {
 
 	response.Data(c, gin.H{
 		"message": "用户已封禁",
+		"user_id": userID,
 		"reason":  req.Reason,
 		"days":    req.Days,
+		"banned_at": u.BannedAt,
+		"ban_until": u.BanUntil,
 	})
 }
 
@@ -230,10 +257,20 @@ func (ctrl *UserController) Unban(c *gin.Context) {
 		return
 	}
 
-	// TODO: 添加解封逻辑（需要在 User 模型中添加封禁相关字段）
-	// 例如: u.IsBanned = false
-	// u.BanReason = ""
-	// u.BanUntil = nil
+	// 检查是否已被封禁
+	if !u.IsBanned {
+		response.Abort422(c, gin.H{
+			"message": "用户未被封禁",
+		})
+		return
+	}
+
+	// 清除封禁信息
+	u.IsBanned = false
+	u.BannedAt = nil
+	u.BannedBy = 0
+	u.BanReason = ""
+	u.BanUntil = nil
 
 	if err := database.DB.Save(&u).Error; err != nil {
 		response.Abort500(c, "解封失败")

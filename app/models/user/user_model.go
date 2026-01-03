@@ -2,6 +2,8 @@
 package user
 
 import (
+	"time"
+
 	"GoHub-Service/app/models"
 	"GoHub-Service/pkg/database"
 	"GoHub-Service/pkg/hash"
@@ -22,6 +24,13 @@ type User struct {
 	Email    string `gorm:"uniqueIndex" json:"-"`
 	Phone    string `gorm:"uniqueIndex" json:"-"`
 	Password string `json:"-"`
+
+	// 封禁相关字段
+	IsBanned  bool       `gorm:"type:boolean;default:false;index;comment:是否封禁" json:"is_banned,omitempty"`
+	BannedAt  *time.Time `gorm:"comment:封禁时间" json:"banned_at,omitempty"`
+	BannedBy  uint64     `gorm:"comment:封禁操作员ID" json:"banned_by,omitempty"`
+	BanReason string     `gorm:"type:varchar(500);comment:封禁原因" json:"ban_reason,omitempty"`
+	BanUntil  *time.Time `gorm:"comment:封禁截止时间" json:"ban_until,omitempty"`
 
 	models.CommonTimestampsField
 }
