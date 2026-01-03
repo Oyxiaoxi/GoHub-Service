@@ -61,23 +61,31 @@ func RegisterAPIRoutes(r *gin.Engine) {
 	// 缓存监控相关
 	RegisterCacheMonitorRoutes(r)
 
-	// Auth 路由组
-	authGroup := v1.Group("/auth", middlewares.LimitIP(config.GetString("limiter.auth_ip_rate", "1000-H")))
+	// Auth 路由组 - 增强安全限流
+	authGroup := v1.Group("/auth", 
+		middlewares.LimitIP(config.GetString("limiter.auth_ip_rate", "1000-H")),
+		middlewares.RateLimitMiddleware(20), // 每分钟最多20次请求（IP级别自动封禁）
+	)
 	{
 		authGroup.POST("/login/using-phone", middlewares.GuestJWT(), loginCtrl.LoginByPhone)
 		authGroup.POST("/login/using-password", middlewares.GuestJWT(), loginCtrl.LoginByPassword)
 		authGroup.POST("/login/refresh-token", middlewares.AuthJWT(), loginCtrl.RefreshToken)
 
-		authGroup.POST("/password-reset/using-email", middlewares.GuestJWT(), passwordCtrl.ResetByEmail)
-		authGroup.POST("/password-reset/using-phone", middlewares.GuestJWT(), passwordCtrl.ResetByPhone)
+		// 密码重置 - 敏感操作，使用更严格的限流
+		sensitiveGroup := authGroup.Group("/password-reset", middlewares.RateLimitMiddleware(5)) // 每分钟5次
+		{
+			sensitiveGroup.POST("/using-email", middlewares.GuestJWT(), passwordCtrl.ResetByEmail)
+			sensitiveGroup.POST("/using-phone", middlewares.GuestJWT(), passwordCtrl.ResetByPhone)
+		}
 
 		authGroup.POST("/signup/using-phone", middlewares.GuestJWT(), signupCtrl.SignupUsingPhone)
 		authGroup.POST("/signup/using-email", middlewares.GuestJWT(), signupCtrl.SignupUsingEmail)
 		authGroup.POST("/signup/phone/exist", middlewares.GuestJWT(), middlewares.LimitPerRoute(config.GetString("limiter.signup_exist_rate", "60-H")), signupCtrl.IsPhoneExist)
 		authGroup.POST("/signup/email/exist", middlewares.GuestJWT(), middlewares.LimitPerRoute(config.GetString("limiter.signup_exist_rate", "60-H")), signupCtrl.IsEmailExist)
 
-		authGroup.POST("/verify-codes/phone", middlewares.LimitPerRoute(config.GetString("limiter.verify_phone_rate", "20-H")), verifyCodeCtrl.SendUsingPhone)
-		authGroup.POST("/verify-codes/email", middlewares.LimitPerRoute(config.GetString("limiter.verify_email_rate", "20-H")), verifyCodeCtrl.SendUsingEmail)
+		// 验证码 - 使用增强限流防止滥用
+		authGroup.POST("/verify-codes/phone", middlewares.RateLimitMiddleware(10), middlewares.LimitPerRoute(config.GetString("limiter.verify_phone_rate", "20-H")), verifyCodeCtrl.SendUsingPhone)
+		authGroup.POST("/verify-codes/email", middlewares.RateLimitMiddleware(10), middlewares.LimitPerRoute(config.GetString("limiter.verify_email_rate", "20-H")), verifyCodeCtrl.SendUsingEmail)
 		authGroup.POST("/verify-codes/captcha", middlewares.LimitPerRoute(config.GetString("limiter.verify_captcha_rate", "50-H")), verifyCodeCtrl.ShowCaptcha)
 	}
 

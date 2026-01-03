@@ -29,18 +29,21 @@ func SetupRoute(router *gin.Engine) {
 }
 
 func registerGlobalMiddleWare(router *gin.Engine) {
-    // 推荐注册顺序：CORS → SecureHeaders → XSSProtection → RequestID → ResourceTracking → Prometheus → Recovery → Logger → ForceUA → Gzip
+    // 推荐注册顺序：CORS → SecureHeaders → EnhancedSecurityValidation → EnhancedSQLInjectionProtection → XSSProtection → RequestID → ResourceTracking → Prometheus → Recovery → Logger → ForceUA → Gzip
     router.Use(
-        middlewares.CORS(),                 // 1. CORS 跨域配置，最先处理
-        middlewares.SecureHeaders(),        // 2. 安全响应头
-        middlewares.XSSProtection(),        // 3. XSS 防护
-        middlewares.RequestID(),            // 4. 请求唯一ID
-        middlewares.ResourceTracking(),     // 5. 资源追踪（在 Prometheus 之前，更准确）
-        metrics.PrometheusMiddleware(),     // 6. Prometheus 指标收集
-        middlewares.Recovery(),             // 7. Panic 恢复，保证后续中间件能捕获异常
-        middlewares.Logger(),               // 8. 日志记录，捕获所有请求日志
-        middlewares.ForceUA(),              // 9. 强制 User-Agent，可根据需要调整顺序
-        gzip.Gzip(gzip.DefaultCompression), // 10. 启用 Gzip 压缩
+        middlewares.CORS(),                          // 1. CORS 跨域配置，最先处理
+        middlewares.SecureHeaders(),                 // 2. 安全响应头
+        middlewares.EnhancedSecurityValidation(),    // 3. 增强安全验证（SQL/XSS/路径遍历）
+        middlewares.EnhancedSQLInjectionProtection(), // 4. 增强 SQL 注入防护
+        middlewares.EnhancedXSSProtection(),         // 5. 增强 XSS 防护
+        middlewares.XSSProtection(),                 // 6. 基础 XSS 防护（向后兼容）
+        middlewares.RequestID(),                     // 7. 请求唯一ID
+        middlewares.ResourceTracking(),              // 8. 资源追踪（在 Prometheus 之前，更准确）
+        metrics.PrometheusMiddleware(),              // 9. Prometheus 指标收集
+        middlewares.Recovery(),                      // 10. Panic 恢复，保证后续中间件能捕获异常
+        middlewares.Logger(),                        // 11. 日志记录，捕获所有请求日志
+        middlewares.ForceUA(),                       // 12. 强制 User-Agent，可根据需要调整顺序
+        gzip.Gzip(gzip.DefaultCompression),          // 13. 启用 Gzip 压缩
     )
 }
 
