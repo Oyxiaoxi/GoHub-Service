@@ -180,10 +180,3 @@ func (ctrl *CategoryController) Sort(c *gin.Context) {
 		"count":   len(req.Items),
 	})
 }
-// Sort 分类排序（暂不支持，因为 Category 模型没有 order 字段）
-func (ctrl *CategoryController) Sort(c *gin.Context) {
-	// 注意：Category 模型暂无 order 字段，此功能暂不可用
-	response.Data(c, gin.H{
-		"message": "分类排序功能暂不支持",
-	})
-}

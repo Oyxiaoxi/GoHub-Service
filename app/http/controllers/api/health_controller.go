@@ -50,8 +50,8 @@ func (ctrl *HealthController) Readiness(c *gin.Context) {
 	}
 
 	// 检查 Redis 连接
-	if redis.Redis != nil {
-		_, err := redis.Redis.Ping(c.Request.Context()).Result()
+	if redis.Redis != nil && redis.Redis.Client != nil {
+		err := redis.Redis.Client.Ping(c.Request.Context()).Err()
 		if err != nil {
 			checks["redis"] = false
 			allReady = false
