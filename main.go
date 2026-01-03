@@ -9,6 +9,7 @@ import (
 	"GoHub-Service/pkg/console"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/spf13/cobra"
 )
@@ -21,7 +22,7 @@ func main() {
 		Short: "A simple forum project",
 		Long:  `Default will run "serve" command, you can use "-h" flag to see all subcommands`,
 
-		// rootCmd 的所有子命令都会执行以下代码
+		// PersistentPreRun 的所有子命令都会执行以下代码
 		PersistentPreRun: func(command *cobra.Command, args []string) {
 
 			// 配置初始化，依赖命令行 --env 参数
@@ -29,6 +30,9 @@ func main() {
 
 			// 初始化日志（必须在其他组件之前）
 			bootstrap.SetupLogger()
+
+			// 初始化资源追踪器
+			bootstrap.SetupTracker()
 
 			// 初始化数据库
 			bootstrap.SetupDB()
@@ -38,6 +42,12 @@ func main() {
 
 			// 初始化缓存
 			bootstrap.SetupCache()
+
+			// 启动资源泄漏定期报告（仅在 serve 命令时启动）
+			if command.Name() == "serve" {
+				// 5分钟未释放的资源视为可能泄漏，每1分钟检查一次
+				bootstrap.StartTrackerReporting(5*time.Minute, 1*time.Minute)
+			}
 		},
 	}
 
