@@ -15,6 +15,9 @@ import (
 // SetupRoute 路由初始化
 func SetupRoute(router *gin.Engine) {
 
+    // 设置资源追踪器（必须在注册中间件之前）
+    middlewares.SetResourceTracker(Tracker)
+
     // 注册全局中间件
     registerGlobalMiddleWare(router)
 

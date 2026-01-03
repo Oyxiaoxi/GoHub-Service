@@ -4,6 +4,8 @@ import (
 	"GoHub-Service/pkg/logger"
 	"GoHub-Service/pkg/resource"
 	"time"
+
+	"go.uber.org/zap"
 )
 
 // Tracker 全局资源追踪器
@@ -28,8 +30,8 @@ func StartTrackerReporting(threshold, interval time.Duration) {
 			// 记录当前追踪的资源数量
 			count := Tracker.Count()
 			if count > 0 {
-				logger.Info("资源追踪统计",
-					logger.Int("tracked_count", count),
+				logger.Logger.Info("资源追踪统计",
+					zap.Int("tracked_count", count),
 				)
 			}
 		}
