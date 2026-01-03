@@ -163,7 +163,7 @@ func (ctrl *TopicController) Pin(c *gin.Context) {
 
 	// 检查是否已经置顶
 	if t.IsPinned {
-		response.Abort422(c, gin.H{
+		c.AbortWithStatusJSON(http.StatusUnprocessableEntity, gin.H{
 			"message": "话题已置顶",
 			"pinned_at": t.PinnedAt,
 		})
@@ -204,7 +204,7 @@ func (ctrl *TopicController) Unpin(c *gin.Context) {
 
 	// 检查是否已置顶
 	if !t.IsPinned {
-		response.Abort422(c, gin.H{
+		c.AbortWithStatusJSON(http.StatusUnprocessableEntity, gin.H{
 			"message": "话题未置顶",
 		})
 		return

@@ -208,7 +208,7 @@ func (ctrl *UserController) Ban(c *gin.Context) {
 
 	// 检查是否已经被封禁
 	if u.IsBanned {
-		response.Abort422(c, gin.H{
+		c.AbortWithStatusJSON(http.StatusUnprocessableEntity, gin.H{
 			"message": "用户已被封禁",
 			"banned_at": u.BannedAt,
 			"ban_reason": u.BanReason,
@@ -259,7 +259,7 @@ func (ctrl *UserController) Unban(c *gin.Context) {
 
 	// 检查是否已被封禁
 	if !u.IsBanned {
-		response.Abort422(c, gin.H{
+		c.AbortWithStatusJSON(http.StatusUnprocessableEntity, gin.H{
 			"message": "用户未被封禁",
 		})
 		return
