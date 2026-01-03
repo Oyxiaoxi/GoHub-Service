@@ -2,142 +2,143 @@
 package cache
 
 import (
-    "encoding/json"
-    "GoHub-Service/pkg/logger"
-    "sync"
-    "time"
+	"context"
+	"encoding/json"
+	"GoHub-Service/pkg/logger"
+	"sync"
+	"time"
 
-    "github.com/spf13/cast"
+	"github.com/spf13/cast"
 )
 
 type CacheService struct {
-    Store Store
+	Store Store
 }
 
 var once sync.Once
 var Cache *CacheService
 
 func InitWithCacheStore(store Store) {
-    once.Do(func() {
-        Cache = &CacheService{
-            Store: store,
-        }
-    })
+	once.Do(func() {
+		Cache = &CacheService{
+			Store: store,
+		}
+	})
 }
 
-func Set(key string, obj interface{}, expireTime time.Duration) {
-    b, err := json.Marshal(&obj)
-    logger.LogIf(err)
-    Cache.Store.Set(key, string(b), expireTime)
+func Set(ctx context.Context, key string, obj interface{}, expireTime time.Duration) {
+	b, err := json.Marshal(&obj)
+	logger.LogIf(err)
+	Cache.Store.Set(ctx, key, string(b), expireTime)
 }
 
-func Get(key string) interface{} {
-    stringValue := Cache.Store.Get(key)
-    var wanted interface{}
-    err := json.Unmarshal([]byte(stringValue), &wanted)
-    logger.LogIf(err)
-    return wanted
+func Get(ctx context.Context, key string) interface{} {
+	stringValue := Cache.Store.Get(ctx, key)
+	var wanted interface{}
+	err := json.Unmarshal([]byte(stringValue), &wanted)
+	logger.LogIf(err)
+	return wanted
 }
 
-func Has(key string) bool {
-    return Cache.Store.Has(key)
+func Has(ctx context.Context, key string) bool {
+	return Cache.Store.Has(ctx, key)
 }
 
 // GetObject 应该传地址，用法如下:
 //     model := user.User{}
 //     cache.GetObject("key", &model)
-func GetObject(key string, wanted interface{}) {
-    val := Cache.Store.Get(key)
-    if len(val) > 0 {
-        err := json.Unmarshal([]byte(val), &wanted)
-        logger.LogIf(err)
-    }
+func GetObject(ctx context.Context, key string, wanted interface{}) {
+	val := Cache.Store.Get(ctx, key)
+	if len(val) > 0 {
+		err := json.Unmarshal([]byte(val), &wanted)
+		logger.LogIf(err)
+	}
 }
 
-func GetString(key string) string {
-    return cast.ToString(Get(key))
+func GetString(ctx context.Context, key string) string {
+	return cast.ToString(Get(ctx, key))
 }
 
-func GetBool(key string) bool {
-    return cast.ToBool(Get(key))
+func GetBool(ctx context.Context, key string) bool {
+	return cast.ToBool(Get(ctx, key))
 }
 
-func GetInt(key string) int {
-    return cast.ToInt(Get(key))
+func GetInt(ctx context.Context, key string) int {
+	return cast.ToInt(Get(ctx, key))
 }
 
-func GetInt32(key string) int32 {
-    return cast.ToInt32(Get(key))
+func GetInt32(ctx context.Context, key string) int32 {
+	return cast.ToInt32(Get(ctx, key))
 }
 
-func GetInt64(key string) int64 {
-    return cast.ToInt64(Get(key))
+func GetInt64(ctx context.Context, key string) int64 {
+	return cast.ToInt64(Get(ctx, key))
 }
 
-func GetUint(key string) uint {
-    return cast.ToUint(Get(key))
+func GetUint(ctx context.Context, key string) uint {
+	return cast.ToUint(Get(ctx, key))
 }
 
-func GetUint32(key string) uint32 {
-    return cast.ToUint32(Get(key))
+func GetUint32(ctx context.Context, key string) uint32 {
+	return cast.ToUint32(Get(ctx, key))
 }
 
-func GetUint64(key string) uint64 {
-    return cast.ToUint64(Get(key))
+func GetUint64(ctx context.Context, key string) uint64 {
+	return cast.ToUint64(Get(ctx, key))
 }
 
-func GetFloat64(key string) float64 {
-    return cast.ToFloat64(Get(key))
+func GetFloat64(ctx context.Context, key string) float64 {
+	return cast.ToFloat64(Get(ctx, key))
 }
 
-func GetTime(key string) time.Time {
-    return cast.ToTime(Get(key))
+func GetTime(ctx context.Context, key string) time.Time {
+	return cast.ToTime(Get(ctx, key))
 }
 
-func GetDuration(key string) time.Duration {
-    return cast.ToDuration(Get(key))
+func GetDuration(ctx context.Context, key string) time.Duration {
+	return cast.ToDuration(Get(ctx, key))
 }
 
-func GetIntSlice(key string) []int {
-    return cast.ToIntSlice(Get(key))
+func GetIntSlice(ctx context.Context, key string) []int {
+	return cast.ToIntSlice(Get(ctx, key))
 }
 
-func GetStringSlice(key string) []string {
-    return cast.ToStringSlice(Get(key))
+func GetStringSlice(ctx context.Context, key string) []string {
+	return cast.ToStringSlice(Get(ctx, key))
 }
 
-func GetStringMap(key string) map[string]interface{} {
-    return cast.ToStringMap(Get(key))
+func GetStringMap(ctx context.Context, key string) map[string]interface{} {
+	return cast.ToStringMap(Get(ctx, key))
 }
 
-func GetStringMapString(key string) map[string]string {
-    return cast.ToStringMapString(Get(key))
+func GetStringMapString(ctx context.Context, key string) map[string]string {
+	return cast.ToStringMapString(Get(ctx, key))
 }
 
-func GetStringMapStringSlice(key string) map[string][]string {
-    return cast.ToStringMapStringSlice(Get(key))
+func GetStringMapStringSlice(ctx context.Context, key string) map[string][]string {
+	return cast.ToStringMapStringSlice(Get(ctx, key))
 }
 
-func Forget(key string) {
-    Cache.Store.Forget(key)
+func Forget(ctx context.Context, key string) {
+	Cache.Store.Forget(ctx, key)
 }
 
-func Forever(key string, value string) {
-    Cache.Store.Set(key, value, 0)
+func Forever(ctx context.Context, key string, value string) {
+	Cache.Store.Set(ctx, key, value, 0)
 }
 
-func Flush() {
-    Cache.Store.Flush()
+func Flush(ctx context.Context) {
+	Cache.Store.Flush(ctx)
 }
 
-func Increment(parameters ...interface{}) {
-    Cache.Store.Increment(parameters...)
+func Increment(ctx context.Context, parameters ...interface{}) {
+	Cache.Store.Increment(ctx, parameters...)
 }
 
-func Decrement(parameters ...interface{}) {
-    Cache.Store.Decrement(parameters...)
+func Decrement(ctx context.Context, parameters ...interface{}) {
+	Cache.Store.Decrement(ctx, parameters...)
 }
 
-func IsAlive() error {
-    return Cache.Store.IsAlive()
+func IsAlive(ctx context.Context) error {
+	return Cache.Store.IsAlive(ctx)
 }

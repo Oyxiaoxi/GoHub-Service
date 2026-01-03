@@ -2,18 +2,20 @@
 package repositories
 
 import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"time"
+
 	"GoHub-Service/app/cache"
 	"GoHub-Service/app/models/category"
 	"GoHub-Service/pkg/database"
 	apperrors "GoHub-Service/pkg/errors"
 	"GoHub-Service/pkg/paginator"
 	"GoHub-Service/pkg/redis"
-	"encoding/json"
-	"fmt"
-	"gorm.io/gorm"
-	"time"
 
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
 // CategoryRepository 聚合了分类的 CRUD、批处理和简单缓存操作的接口定义.
@@ -133,7 +135,7 @@ func (r *categoryRepository) Delete(id string) error {
 
 // GetAllCached 尝试读取缓存的分类列表，未命中时返回空切片且不视为错误（由上层决定降级策略）。
 func (r *categoryRepository) GetAllCached() ([]category.Category, error) {
-	val := redis.Redis.Get(r.cacheKeyList)
+	val := redis.Redis.Get(context.Background(), r.cacheKeyList)
 	if val != "" {
 		var categories []category.Category
 		if err := json.Unmarshal([]byte(val), &categories); err == nil {
@@ -154,13 +156,13 @@ func (r *categoryRepository) SetListCache(categories []category.Category) error 
 		return err
 	}
 
-	redis.Redis.Set(r.cacheKeyList, string(data), time.Duration(r.cacheTTL)*time.Second)
+	redis.Redis.Set(context.Background(), r.cacheKeyList, string(data), time.Duration(r.cacheTTL)*time.Second)
 	return nil
 }
 
 // FlushCache 清空分类相关缓存键，粗粒度策略即可满足当前读多写少场景.
 func (r *categoryRepository) FlushCache() error {
-	_ = redis.Redis.Del(r.cacheKeyList)
+	_ = redis.Redis.Del(context.Background(), r.cacheKeyList)
 	pattern := fmt.Sprintf("%s*", "category:")
 	_ = pattern // 简化实现
 	return nil

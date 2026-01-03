@@ -11,12 +11,14 @@ import (
 
 // MockUserRepository 用户仓储Mock
 type MockUserRepository struct {
-	GetByIDFunc    func(id string) (*user.User, error)
-	GetByEmailFunc func(email string) (*user.User, error)
-	GetByPhoneFunc func(phone string) (*user.User, error)
-	CreateFunc     func(u *user.User) error
-	UpdateFunc     func(u *user.User) error
-	DeleteFunc     func(id string) error
+	GetByIDFunc     func(id string) (*user.User, error)
+	GetByEmailFunc  func(email string) (*user.User, error)
+	GetByPhoneFunc  func(phone string) (*user.User, error)
+	CreateFunc      func(u *user.User) error
+	UpdateFunc      func(u *user.User) error
+	DeleteFunc      func(id string) error
+	BatchCreateFunc func(users []user.User) error
+	BatchDeleteFunc func(ids []string) error
 }
 
 func (m *MockUserRepository) GetByID(id string) (*user.User, error) {
@@ -61,6 +63,20 @@ func (m *MockUserRepository) Delete(id string) error {
 	return nil
 }
 
+func (m *MockUserRepository) BatchCreate(users []user.User) error {
+	if m.BatchCreateFunc != nil {
+		return m.BatchCreateFunc(users)
+	}
+	return nil
+}
+
+func (m *MockUserRepository) BatchDelete(ids []string) error {
+	if m.BatchDeleteFunc != nil {
+		return m.BatchDeleteFunc(ids)
+	}
+	return nil
+}
+
 func (m *MockUserRepository) List(c interface{}, perPage int) ([]user.User, interface{}, error) {
 	return []user.User{}, nil, nil
 }
@@ -74,6 +90,18 @@ func (m *MockUserRepository) ClearNotificationCount(userID string) error {
 }
 
 func (m *MockUserRepository) UpdateLastActiveAt(userID string) error {
+	return nil
+}
+
+func (m *MockUserRepository) GetFromCache(id string) (*user.User, error) {
+	return nil, nil
+}
+
+func (m *MockUserRepository) SetCache(u *user.User) error {
+	return nil
+}
+
+func (m *MockUserRepository) DeleteCache(id string) error {
 	return nil
 }
 

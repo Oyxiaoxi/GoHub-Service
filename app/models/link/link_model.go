@@ -2,12 +2,13 @@
 package link
 
 import (
-    "GoHub-Service/app/models"
-    "GoHub-Service/pkg/database"
-    "GoHub-Service/pkg/cache"
-    "GoHub-Service/pkg/helpers"
-    
-    "time"
+	"context"
+	"GoHub-Service/app/models"
+	"GoHub-Service/pkg/database"
+	"GoHub-Service/pkg/cache"
+	"GoHub-Service/pkg/helpers"
+	
+	"time"
 
 )
 
@@ -35,22 +36,22 @@ func (link *Link) Delete() (rowsAffected int64) {
 }
 
 func AllCached() (links []Link) {
-    // 设置缓存 key
-    cacheKey := "links:all"
-    // 设置过期时间
-    expireTime := 120 * time.Minute
-    // 取数据
-    cache.GetObject(cacheKey, &links)
+	// 设置缓存 key
+	cacheKey := "links:all"
+	// 设置过期时间
+	expireTime := 120 * time.Minute
+	// 取数据
+	cache.GetObject(context.Background(), cacheKey, &links)
 
-    // 如果数据为空
-    if helpers.Empty(links) {
-        // 查询数据库
-        links = All()
-        if helpers.Empty(links) {
-            return links
-        }
-        // 设置缓存
-        cache.Set(cacheKey, links, expireTime)
-    }
-    return
+	// 如果数据为空
+	if helpers.Empty(links) {
+		// 查询数据库
+		links = All()
+		if helpers.Empty(links) {
+			return links
+		}
+		// 设置缓存
+		cache.Set(context.Background(), cacheKey, links, expireTime)
+	}
+	return
 }

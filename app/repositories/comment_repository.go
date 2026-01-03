@@ -2,6 +2,7 @@
 package repositories
 
 import (
+	"context"
 	"GoHub-Service/app/models/comment"
 	"GoHub-Service/pkg/database"
 	"GoHub-Service/pkg/paginator"
@@ -12,19 +13,19 @@ import (
 
 // CommentRepository 评论仓储接口
 type CommentRepository interface {
-	GetByID(id string) (*comment.Comment, error)
-	List(c *gin.Context, perPage int) ([]comment.Comment, *paginator.Paging, error)
-	ListByTopicID(c *gin.Context, topicID string, perPage int) ([]comment.Comment, *paginator.Paging, error)
-	ListByUserID(c *gin.Context, userID string, perPage int) ([]comment.Comment, *paginator.Paging, error)
-	ListReplies(c *gin.Context, parentID string, perPage int) ([]comment.Comment, *paginator.Paging, error)
-	Create(comment *comment.Comment) error
-	Update(comment *comment.Comment) error
-	Delete(id string) error
-	BatchCreate(comments []comment.Comment) error
-	BatchDelete(ids []string) error
-	IncrementLikeCount(id string) error
-	DecrementLikeCount(id string) error
-	CountByTopicID(topicID string) (int64, error)
+	GetByID(ctx context.Context, id string) (*comment.Comment, error)
+	List(ctx context.Context, c *gin.Context, perPage int) ([]comment.Comment, *paginator.Paging, error)
+	ListByTopicID(ctx context.Context, c *gin.Context, topicID string, perPage int) ([]comment.Comment, *paginator.Paging, error)
+	ListByUserID(ctx context.Context, c *gin.Context, userID string, perPage int) ([]comment.Comment, *paginator.Paging, error)
+	ListReplies(ctx context.Context, c *gin.Context, parentID string, perPage int) ([]comment.Comment, *paginator.Paging, error)
+	Create(ctx context.Context, comment *comment.Comment) error
+	Update(ctx context.Context, comment *comment.Comment) error
+	Delete(ctx context.Context, id string) error
+	BatchCreate(ctx context.Context, comments []comment.Comment) error
+	BatchDelete(ctx context.Context, ids []string) error
+	IncrementLikeCount(ctx context.Context, id string) error
+	DecrementLikeCount(ctx context.Context, id string) error
+	CountByTopicID(ctx context.Context, topicID string) (int64, error)
 }
 
 // commentRepository 评论仓储实现
@@ -36,9 +37,9 @@ func NewCommentRepository() CommentRepository {
 }
 
 // GetByID 根据ID获取评论
-func (r *commentRepository) GetByID(id string) (*comment.Comment, error) {
+func (r *commentRepository) GetByID(ctx context.Context, id string) (*comment.Comment, error) {
 	var commentModel comment.Comment
-	if err := database.DB.
+	if err := database.DB.WithContext(ctx).
 		Select("id", "topic_id", "user_id", "content", "parent_id", "like_count", "created_at", "updated_at").
 		Preload("User", func(db *gorm.DB) *gorm.DB {
 			return db.Select("id", "name", "email", "avatar")
@@ -56,9 +57,9 @@ func (r *commentRepository) GetByID(id string) (*comment.Comment, error) {
 }
 
 // List 获取评论列表
-func (r *commentRepository) List(c *gin.Context, perPage int) ([]comment.Comment, *paginator.Paging, error) {
+func (r *commentRepository) List(ctx context.Context, c *gin.Context, perPage int) ([]comment.Comment, *paginator.Paging, error) {
 	var comments []comment.Comment
-	query := database.DB.Model(&comment.Comment{}).
+	query := database.DB.WithContext(ctx).Model(&comment.Comment{}).
 		Select("id", "topic_id", "user_id", "content", "parent_id", "like_count", "created_at", "updated_at").
 		Preload("User", func(db *gorm.DB) *gorm.DB {
 			return db.Select("id", "name", "email", "avatar")
@@ -80,9 +81,9 @@ func (r *commentRepository) List(c *gin.Context, perPage int) ([]comment.Comment
 }
 
 // ListByTopicID 获取指定话题的评论列表
-func (r *commentRepository) ListByTopicID(c *gin.Context, topicID string, perPage int) ([]comment.Comment, *paginator.Paging, error) {
+func (r *commentRepository) ListByTopicID(ctx context.Context, c *gin.Context, topicID string, perPage int) ([]comment.Comment, *paginator.Paging, error) {
 	var comments []comment.Comment
-	query := database.DB.Model(&comment.Comment{}).
+	query := database.DB.WithContext(ctx).Model(&comment.Comment{}).
 		Select("id", "topic_id", "user_id", "content", "parent_id", "like_count", "created_at", "updated_at").
 		Where("topic_id = ? AND parent_id = ?", topicID, "0").
 		Preload("User", func(db *gorm.DB) *gorm.DB {
@@ -102,9 +103,9 @@ func (r *commentRepository) ListByTopicID(c *gin.Context, topicID string, perPag
 }
 
 // ListByUserID 获取指定用户的评论列表
-func (r *commentRepository) ListByUserID(c *gin.Context, userID string, perPage int) ([]comment.Comment, *paginator.Paging, error) {
+func (r *commentRepository) ListByUserID(ctx context.Context, c *gin.Context, userID string, perPage int) ([]comment.Comment, *paginator.Paging, error) {
 	var comments []comment.Comment
-	query := database.DB.Model(&comment.Comment{}).
+	query := database.DB.WithContext(ctx).Model(&comment.Comment{}).
 		Select("id", "topic_id", "user_id", "content", "parent_id", "like_count", "created_at", "updated_at").
 		Where("user_id = ?", userID).
 		Preload("User", func(db *gorm.DB) *gorm.DB {
@@ -127,9 +128,9 @@ func (r *commentRepository) ListByUserID(c *gin.Context, userID string, perPage 
 }
 
 // ListReplies 获取评论的回复列表
-func (r *commentRepository) ListReplies(c *gin.Context, parentID string, perPage int) ([]comment.Comment, *paginator.Paging, error) {
+func (r *commentRepository) ListReplies(ctx context.Context, c *gin.Context, parentID string, perPage int) ([]comment.Comment, *paginator.Paging, error) {
 	var comments []comment.Comment
-	query := database.DB.Model(&comment.Comment{}).
+	query := database.DB.WithContext(ctx).Model(&comment.Comment{}).
 		Select("id", "topic_id", "user_id", "content", "parent_id", "like_count", "created_at", "updated_at").
 		Where("parent_id = ?", parentID).
 		Preload("User", func(db *gorm.DB) *gorm.DB {
@@ -149,7 +150,7 @@ func (r *commentRepository) ListReplies(c *gin.Context, parentID string, perPage
 }
 
 // Create 创建评论
-func (r *commentRepository) Create(c *comment.Comment) error {
+func (r *commentRepository) Create(ctx context.Context, c *comment.Comment) error {
 	c.Create()
 	if c.ID == 0 {
 		return ErrCreateFailed
@@ -158,7 +159,7 @@ func (r *commentRepository) Create(c *comment.Comment) error {
 }
 
 // Update 更新评论
-func (r *commentRepository) Update(c *comment.Comment) error {
+func (r *commentRepository) Update(ctx context.Context, c *comment.Comment) error {
 	rowsAffected := c.Save()
 	if rowsAffected == 0 {
 		return ErrUpdateFailed
@@ -167,9 +168,9 @@ func (r *commentRepository) Update(c *comment.Comment) error {
 }
 
 // Delete 删除评论
-func (r *commentRepository) Delete(id string) error {
+func (r *commentRepository) Delete(ctx context.Context, id string) error {
 	var commentModel comment.Comment
-	if err := database.DB.First(&commentModel, id).Error; err != nil {
+	if err := database.DB.WithContext(ctx).First(&commentModel, id).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return ErrNotFound
 		}
@@ -184,33 +185,33 @@ func (r *commentRepository) Delete(id string) error {
 }
 
 // IncrementLikeCount 增加点赞数
-func (r *commentRepository) IncrementLikeCount(id string) error {
-	return database.DB.Model(&comment.Comment{}).
+func (r *commentRepository) IncrementLikeCount(ctx context.Context, id string) error {
+	return database.DB.WithContext(ctx).Model(&comment.Comment{}).
 		Where("id = ?", id).
 		UpdateColumn("like_count", gorm.Expr("like_count + ?", 1)).Error
 }
 
 // DecrementLikeCount 减少点赞数
-func (r *commentRepository) DecrementLikeCount(id string) error {
-	return database.DB.Model(&comment.Comment{}).
+func (r *commentRepository) DecrementLikeCount(ctx context.Context, id string) error {
+	return database.DB.WithContext(ctx).Model(&comment.Comment{}).
 		Where("id = ? AND like_count > ?", id, 0).
 		UpdateColumn("like_count", gorm.Expr("like_count - ?", 1)).Error
 }
 
 // CountByTopicID 统计话题的评论数
-func (r *commentRepository) CountByTopicID(topicID string) (int64, error) {
+func (r *commentRepository) CountByTopicID(ctx context.Context, topicID string) (int64, error) {
 	var count int64
-	err := database.DB.Model(&comment.Comment{}).Where("topic_id = ?", topicID).Count(&count).Error
+	err := database.DB.WithContext(ctx).Model(&comment.Comment{}).Where("topic_id = ?", topicID).Count(&count).Error
 	return count, err
 }
 
 // BatchCreate 批量创建评论（使用事务和批量插入优化）
-func (r *commentRepository) BatchCreate(comments []comment.Comment) error {
+func (r *commentRepository) BatchCreate(ctx context.Context, comments []comment.Comment) error {
 	if len(comments) == 0 {
 		return nil
 	}
 
-	return database.DB.Transaction(func(tx *gorm.DB) error {
+	return database.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		// 使用 CreateInBatches 批量插入，每批100条
 		if err := tx.CreateInBatches(&comments, 100).Error; err != nil {
 			return err
@@ -220,12 +221,12 @@ func (r *commentRepository) BatchCreate(comments []comment.Comment) error {
 }
 
 // BatchDelete 批量删除评论（使用事务）
-func (r *commentRepository) BatchDelete(ids []string) error {
+func (r *commentRepository) BatchDelete(ctx context.Context, ids []string) error {
 	if len(ids) == 0 {
 		return nil
 	}
 
-	return database.DB.Transaction(func(tx *gorm.DB) error {
+	return database.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		if err := tx.Where("id IN ?", ids).Delete(&comment.Comment{}).Error; err != nil {
 			return err
 		}

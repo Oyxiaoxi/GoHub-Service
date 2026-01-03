@@ -2,6 +2,7 @@
 package services
 
 import (
+	"context"
 	"GoHub-Service/app/repositories"
 	apperrors "GoHub-Service/pkg/errors"
 )
@@ -25,7 +26,7 @@ func NewInteractionService() *InteractionService {
 }
 
 func (s *InteractionService) LikeTopic(userID, topicID string) *apperrors.AppError {
-	topicModel, err := s.topicRepo.GetByID(topicID)
+	topicModel, err := s.topicRepo.GetByID(context.Background(), topicID)
 	if err != nil {
 		return apperrors.WrapError(err, "获取话题失败")
 	}
@@ -42,7 +43,7 @@ func (s *InteractionService) LikeTopic(userID, topicID string) *apperrors.AppErr
 }
 
 func (s *InteractionService) UnlikeTopic(userID, topicID string) *apperrors.AppError {
-	if _, err := s.topicRepo.GetByID(topicID); err != nil {
+	if _, err := s.topicRepo.GetByID(context.Background(), topicID); err != nil {
 		return apperrors.WrapError(err, "获取话题失败")
 	}
 	if err := s.repo.UnlikeTopic(userID, topicID); err != nil {
@@ -52,7 +53,7 @@ func (s *InteractionService) UnlikeTopic(userID, topicID string) *apperrors.AppE
 }
 
 func (s *InteractionService) FavoriteTopic(userID, topicID string) *apperrors.AppError {
-	topicModel, err := s.topicRepo.GetByID(topicID)
+	topicModel, err := s.topicRepo.GetByID(context.Background(), topicID)
 	if err != nil {
 		return apperrors.WrapError(err, "获取话题失败")
 	}
@@ -69,7 +70,7 @@ func (s *InteractionService) FavoriteTopic(userID, topicID string) *apperrors.Ap
 }
 
 func (s *InteractionService) UnfavoriteTopic(userID, topicID string) *apperrors.AppError {
-	if _, err := s.topicRepo.GetByID(topicID); err != nil {
+	if _, err := s.topicRepo.GetByID(context.Background(), topicID); err != nil {
 		return apperrors.WrapError(err, "获取话题失败")
 	}
 	if err := s.repo.UnfavoriteTopic(userID, topicID); err != nil {
@@ -108,7 +109,7 @@ func (s *InteractionService) UnfollowUser(followerID, followeeID string) *apperr
 }
 
 func (s *InteractionService) AddTopicView(topicID string) *apperrors.AppError {
-	if _, err := s.topicRepo.GetByID(topicID); err != nil {
+	if _, err := s.topicRepo.GetByID(context.Background(), topicID); err != nil {
 		return apperrors.WrapError(err, "获取话题失败")
 	}
 	if err := s.repo.IncrementTopicView(topicID); err != nil {

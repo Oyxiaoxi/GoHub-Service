@@ -4,6 +4,7 @@ import (
 	"GoHub-Service/app/requests"
 	"GoHub-Service/app/services"
 	"GoHub-Service/pkg/auth"
+	ctx "GoHub-Service/pkg/ctx"
 	"GoHub-Service/pkg/logger"
 	"GoHub-Service/pkg/response"
 
@@ -38,7 +39,10 @@ func (ctrl *CommentsController) Index(c *gin.Context) {
 		return
 	}
 
-	listResponse, err := ctrl.commentService.List(c, 15)
+	// 从 Gin Context 创建请求 Context
+	requestCtx := ctx.FromGinContext(c)
+
+	listResponse, err := ctrl.commentService.List(requestCtx, c, 15)
 	if err != nil {
 		logger.LogErrorWithContext(c, err, "获取评论列表失败")
 		response.ApiError(c, 500, err.Code, err.Message)
@@ -61,7 +65,10 @@ func (ctrl *CommentsController) Index(c *gin.Context) {
 // @Failure 404 {object} map[string]interface{} "评论不存在"
 // @Router /api/v1/comments/{id} [get]
 func (ctrl *CommentsController) Show(c *gin.Context) {
-	commentModel, err := ctrl.commentService.GetByID(c.Param("id"))
+	// 从 Gin Context 创建请求 Context
+	requestCtx := ctx.FromGinContext(c)
+
+	commentModel, err := ctrl.commentService.GetByID(requestCtx, c.Param("id"))
 	if err != nil {
 		logger.LogErrorWithContext(c, err, "获取评论失败")
 		if err.Code == 4001 {
@@ -95,6 +102,9 @@ func (ctrl *CommentsController) Store(c *gin.Context) {
 	// 获取当前用户ID
 	userID := auth.CurrentUID(c)
 
+	// 从 Gin Context 创建请求 Context
+	requestCtx := ctx.FromGinContext(c)
+
 	// 创建评论
 	dto := &services.CommentCreateDTO{
 		TopicID:  request.TopicID,
@@ -103,7 +113,7 @@ func (ctrl *CommentsController) Store(c *gin.Context) {
 		ParentID: request.ParentID,
 	}
 
-	commentModel, err := ctrl.commentService.Create(dto)
+	commentModel, err := ctrl.commentService.Create(requestCtx, dto)
 	if err != nil {
 		logger.LogErrorWithContext(c, err, "创建评论失败")
 		response.ApiError(c, 500, err.Code, err.Message)
@@ -138,7 +148,10 @@ func (ctrl *CommentsController) Update(c *gin.Context) {
 		Content: &request.Content,
 	}
 
-	commentModel, err := ctrl.commentService.Update(c.Param("id"), dto)
+	// 从 Gin Context 创建请求 Context
+	requestCtx := ctx.FromGinContext(c)
+
+	commentModel, err := ctrl.commentService.Update(requestCtx, c.Param("id"), dto)
 	if err != nil {
 		logger.LogErrorWithContext(c, err, "更新评论失败")
 		if err.Code == 4001 {
@@ -165,7 +178,10 @@ func (ctrl *CommentsController) Update(c *gin.Context) {
 // @Router /api/v1/comments/{id} [delete]
 // @Security ApiKeyAuth
 func (ctrl *CommentsController) Delete(c *gin.Context) {
-	err := ctrl.commentService.Delete(c.Param("id"))
+	// 从 Gin Context 创建请求 Context
+	requestCtx := ctx.FromGinContext(c)
+
+	err := ctrl.commentService.Delete(requestCtx, c.Param("id"))
 	if err != nil {
 		logger.LogErrorWithContext(c, err, "删除评论失败")
 		if err.Code == 4001 {
@@ -197,7 +213,11 @@ func (ctrl *CommentsController) ListByTopicID(c *gin.Context) {
 	}
 
 	topicID := c.Param("id")
-	listResponse, err := ctrl.commentService.ListByTopicID(c, topicID, 15)
+
+	// 从 Gin Context 创建请求 Context
+	requestCtx := ctx.FromGinContext(c)
+
+	listResponse, err := ctrl.commentService.ListByTopicID(requestCtx, c, topicID, 15)
 	if err != nil {
 		logger.LogErrorWithContext(c, err, "获取话题评论列表失败")
 		response.ApiError(c, 500, err.Code, err.Message)
@@ -228,7 +248,11 @@ func (ctrl *CommentsController) ListByUserID(c *gin.Context) {
 	}
 
 	userID := c.Param("id")
-	listResponse, err := ctrl.commentService.ListByUserID(c, userID, 15)
+
+	// 从 Gin Context 创建请求 Context
+	requestCtx := ctx.FromGinContext(c)
+
+	listResponse, err := ctrl.commentService.ListByUserID(requestCtx, c, userID, 15)
 	if err != nil {
 		logger.LogErrorWithContext(c, err, "获取用户评论列表失败")
 		response.ApiError(c, 500, err.Code, err.Message)
@@ -259,7 +283,11 @@ func (ctrl *CommentsController) ListReplies(c *gin.Context) {
 	}
 
 	parentID := c.Param("id")
-	listResponse, err := ctrl.commentService.ListReplies(c, parentID, 15)
+
+	// 从 Gin Context 创建请求 Context
+	requestCtx := ctx.FromGinContext(c)
+
+	listResponse, err := ctrl.commentService.ListReplies(requestCtx, c, parentID, 15)
 	if err != nil {
 		logger.LogErrorWithContext(c, err, "获取评论回复列表失败")
 		response.ApiError(c, 500, err.Code, err.Message)
@@ -284,7 +312,10 @@ func (ctrl *CommentsController) ListReplies(c *gin.Context) {
 // @Router /api/v1/comments/{id}/like [post]
 // @Security ApiKeyAuth
 func (ctrl *CommentsController) Like(c *gin.Context) {
-	err := ctrl.commentService.LikeComment(c.Param("id"))
+	// 从 Gin Context 创建请求 Context
+	requestCtx := ctx.FromGinContext(c)
+
+	err := ctrl.commentService.LikeComment(requestCtx, c.Param("id"))
 	if err != nil {
 		logger.LogErrorWithContext(c, err, "点赞评论失败")
 		response.ApiError(c, 500, err.Code, err.Message)
@@ -306,7 +337,10 @@ func (ctrl *CommentsController) Like(c *gin.Context) {
 // @Router /api/v1/comments/{id}/unlike [post]
 // @Security ApiKeyAuth
 func (ctrl *CommentsController) Unlike(c *gin.Context) {
-	err := ctrl.commentService.UnlikeComment(c.Param("id"))
+	// 从 Gin Context 创建请求 Context
+	requestCtx := ctx.FromGinContext(c)
+
+	err := ctrl.commentService.UnlikeComment(requestCtx, c.Param("id"))
 	if err != nil {
 		logger.LogErrorWithContext(c, err, "取消点赞失败")
 		response.ApiError(c, 500, err.Code, err.Message)

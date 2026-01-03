@@ -1,6 +1,8 @@
 package repositories
 
 import (
+	"context"
+
 	"GoHub-Service/app/models/comment"
 	"GoHub-Service/pkg/database"
 	"testing"
@@ -64,7 +66,7 @@ func BenchmarkBatchOperations(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			comments := prepareComments(100)
 			for j := range comments {
-				repo.Create(&comments[j])
+				repo.Create(context.Background(), &comments[j])
 			}
 		}
 	})
@@ -73,7 +75,7 @@ func BenchmarkBatchOperations(b *testing.B) {
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
 			comments := prepareComments(100)
-			repo.BatchCreate(comments)
+			repo.BatchCreate(context.Background(), comments)
 		}
 	})
 }
@@ -152,7 +154,7 @@ func TestBatchOperations(t *testing.T) {
 			{Content: "Test 3", TopicID: "1", UserID: "1"},
 		}
 
-		err := repo.BatchCreate(comments)
+		err := repo.BatchCreate(context.Background(), comments)
 		assert.NoError(t, err)
 
 		// 验证所有评论都已创建
@@ -168,7 +170,7 @@ func TestBatchOperations(t *testing.T) {
 			{Content: "To Delete 2", TopicID: "1", UserID: "1"},
 			{Content: "To Delete 3", TopicID: "1", UserID: "1"},
 		}
-		err := repo.BatchCreate(comments)
+		err := repo.BatchCreate(context.Background(), comments)
 		assert.NoError(t, err)
 
 		// 批量删除
@@ -177,12 +179,12 @@ func TestBatchOperations(t *testing.T) {
 			ids[i] = c.GetStringID()
 		}
 
-		err = repo.BatchDelete(ids)
+		err = repo.BatchDelete(context.Background(), ids)
 		assert.NoError(t, err)
 
 		// 验证已删除
 		for _, id := range ids {
-			c, err := repo.GetByID(id)
+			c, err := repo.GetByID(context.Background(), id)
 			assert.NoError(t, err)
 			assert.Nil(t, c, "评论应该已被删除")
 		}

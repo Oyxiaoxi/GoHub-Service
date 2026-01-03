@@ -68,7 +68,7 @@ func main() {
 		},
 	}
 
-	if err := client.BulkIndex(ctx, testTopics); err != nil {
+	if err := client.BulkIndex(ctx, "gohub-topics", testTopics); err != nil {
 		log.Fatalf("Failed to bulk index topics: %v", err)
 	}
 	fmt.Println("✓ Test data indexed successfully")

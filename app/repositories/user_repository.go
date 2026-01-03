@@ -2,18 +2,20 @@
 package repositories
 
 import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"time"
+
 	"GoHub-Service/app/cache"
 	"GoHub-Service/app/models/user"
 	"GoHub-Service/pkg/database"
 	apperrors "GoHub-Service/pkg/errors"
 	"GoHub-Service/pkg/paginator"
 	"GoHub-Service/pkg/redis"
-	"encoding/json"
-	"fmt"
-	"gorm.io/gorm"
-	"time"
 
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
 // UserRepository 定义用户的查询、批处理以及缓存读写接口.
@@ -93,7 +95,7 @@ func (r *userRepository) List(c *gin.Context, perPage int) ([]user.User, *pagina
 // GetFromCache 从缓存获取用户，缓存未命中返回可视为软错误供上层回源.
 func (r *userRepository) GetFromCache(id string) (*user.User, error) {
 	key := fmt.Sprintf(r.cacheKeyUser, id)
-	val := redis.Redis.Get(key)
+	val := redis.Redis.Get(context.Background(), key)
 	if val == "" {
 		return nil, fmt.Errorf("cache miss")
 	}
@@ -114,13 +116,13 @@ func (r *userRepository) SetCache(u *user.User) error {
 		return err
 	}
 
-	redis.Redis.Set(key, string(data), time.Duration(r.cacheTTL)*time.Second)
+	redis.Redis.Set(context.Background(), key, string(data), time.Duration(r.cacheTTL)*time.Second)
 	return nil
 }
 
 // DeleteCache 删除指定用户缓存，供更新/删除后调用.
 func (r *userRepository) DeleteCache(id string) error {
 	key := fmt.Sprintf(r.cacheKeyUser, id)
-	redis.Redis.Del(key)
+	redis.Redis.Del(context.Background(), key)
 	return nil
 }

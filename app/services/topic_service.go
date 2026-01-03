@@ -2,6 +2,7 @@
 package services
 
 import (
+	"context"
 	"GoHub-Service/app/cache"
 	"GoHub-Service/app/models/topic"
 	"GoHub-Service/app/repositories"
@@ -100,13 +101,13 @@ func (s *TopicService) toResponseDTOList(topics []topic.Topic) []TopicResponseDT
 // GetByID 根据ID获取话题
 func (s *TopicService) GetByID(id string) (*TopicResponseDTO, *apperrors.AppError) {
 	if s.cache != nil {
-		topicModel, err := s.cache.GetByID(id)
+		topicModel, err := s.cache.GetByID(context.Background(), id)
 		if err == nil && topicModel != nil {
 			return s.toResponseDTO(topicModel), nil
 		}
 	}
 
-	topicModel, err := s.repo.GetByID(id)
+	topicModel, err := s.repo.GetByID(context.Background(), id)
 	if err != nil {
 		return nil, apperrors.WrapError(err, "获取话题失败")
 	}
@@ -114,7 +115,7 @@ func (s *TopicService) GetByID(id string) (*TopicResponseDTO, *apperrors.AppErro
 		return nil, apperrors.NotFoundError("话题").WithDetails(map[string]interface{}{"topic_id": id})
 	}
 	if s.cache != nil {
-		s.cache.Set(topicModel)
+		s.cache.Set(context.Background(), topicModel)
 	}
 	return s.toResponseDTO(topicModel), nil
 }
@@ -122,9 +123,9 @@ func (s *TopicService) GetByID(id string) (*TopicResponseDTO, *apperrors.AppErro
 // List 获取话题列表
 func (s *TopicService) List(c *gin.Context, perPage int) (*TopicListResponseDTO, *apperrors.AppError) {
 	if s.cache != nil {
-		topics, found := s.cache.GetList(c)
+		topics, found := s.cache.GetList(context.Background(), c)
 		if found && len(topics) > 0 {
-			data, pager, _ := s.repo.List(c, perPage)
+			data, pager, _ := s.repo.List(context.Background(), c, perPage)
 			return &TopicListResponseDTO{
 				Topics: s.toResponseDTOList(data),
 				Paging: pager,
@@ -132,12 +133,12 @@ func (s *TopicService) List(c *gin.Context, perPage int) (*TopicListResponseDTO,
 		}
 	}
 
-	data, pager, err := s.repo.List(c, perPage)
+	data, pager, err := s.repo.List(context.Background(), c, perPage)
 	if err != nil {
 		return nil, apperrors.WrapError(err, "获取话题列表失败")
 	}
 	if len(data) > 0 && s.cache != nil {
-		s.cache.SetList(c, data)
+		s.cache.SetList(context.Background(), c, data)
 	}
 	return &TopicListResponseDTO{
 		Topics: s.toResponseDTOList(data),
@@ -153,18 +154,18 @@ func (s *TopicService) Create(dto TopicCreateDTO) (*TopicResponseDTO, *apperrors
 		CategoryID: dto.CategoryID,
 		UserID:     dto.UserID,
 	}
-	if err := s.repo.Create(topicModel); err != nil {
+	if err := s.repo.Create(context.Background(), topicModel); err != nil {
 		return nil, apperrors.WrapError(err, "创建话题失败")
 	}
 	if s.cache != nil {
-		s.cache.ClearList()
+		s.cache.ClearList(context.Background())
 	}
 	return s.toResponseDTO(topicModel), nil
 }
 
 // Update 更新话题
 func (s *TopicService) Update(id string, dto TopicUpdateDTO) (*TopicResponseDTO, *apperrors.AppError) {
-	topicModel, err := s.repo.GetByID(id)
+	topicModel, err := s.repo.GetByID(context.Background(), id)
 	if err != nil {
 		return nil, apperrors.WrapError(err, "获取话题失败")
 	}
@@ -180,32 +181,32 @@ func (s *TopicService) Update(id string, dto TopicUpdateDTO) (*TopicResponseDTO,
 	if dto.CategoryID != nil {
 		topicModel.CategoryID = *dto.CategoryID
 	}
-	if err := s.repo.Update(topicModel); err != nil {
+	if err := s.repo.Update(context.Background(), topicModel); err != nil {
 		return nil, apperrors.WrapError(err, "更新话题失败")
 	}
 	if s.cache != nil {
-		s.cache.Delete(id)
-		s.cache.ClearList()
+		s.cache.Delete(context.Background(), id)
+		s.cache.ClearList(context.Background())
 	}
 	return s.toResponseDTO(topicModel), nil
 }
 
 // Delete 删除话题
 func (s *TopicService) Delete(id string) *apperrors.AppError {
-	err := s.repo.Delete(id)
+	err := s.repo.Delete(context.Background(), id)
 	if err != nil {
 		return apperrors.WrapError(err, "删除话题失败")
 	}
 	if s.cache != nil {
-		s.cache.Delete(id)
-		s.cache.ClearList()
+		s.cache.Delete(context.Background(), id)
+		s.cache.ClearList(context.Background())
 	}
 	return nil
 }
 
 // CheckOwnership 检查用户是否拥有该话题
 func (s *TopicService) CheckOwnership(topicID, userID string) (bool, *apperrors.AppError) {
-	topicModel, err := s.repo.GetByID(topicID)
+	topicModel, err := s.repo.GetByID(context.Background(), topicID)
 	if err != nil {
 		return false, apperrors.WrapError(err, "检查话题所有权失败")
 	}

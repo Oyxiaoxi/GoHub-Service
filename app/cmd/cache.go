@@ -1,11 +1,12 @@
 package cmd
 
 import (
-    "fmt"
-    "GoHub-Service/pkg/cache"
-    "GoHub-Service/pkg/console"
+	"context"
+	"fmt"
+	"GoHub-Service/pkg/cache"
+	"GoHub-Service/pkg/console"
 
-    "github.com/spf13/cobra"
+	"github.com/spf13/cobra"
 )
 
 var CmdCache = &cobra.Command{
@@ -38,11 +39,11 @@ func init() {
 }
 
 func runCacheClear(cmd *cobra.Command, args []string) {
-    cache.Flush()
-    console.Success("Cache cleared.")
+	cache.Flush(context.Background())
+	console.Success("Cache cleared.")
 }
 
 func runCacheForget(cmd *cobra.Command, args []string) {
-    cache.Forget(cacheKey)
-    console.Success(fmt.Sprintf("Cache key [%s] deleted.", cacheKey))
+	cache.Forget(context.Background(), cacheKey)
+	console.Success(fmt.Sprintf("Cache key [%s] deleted.", cacheKey))
 }

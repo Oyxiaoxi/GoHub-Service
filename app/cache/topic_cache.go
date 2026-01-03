@@ -2,6 +2,7 @@
 package cache
 
 import (
+	"context"
 	"GoHub-Service/app/models/topic"
 	"GoHub-Service/pkg/cache"
 	"encoding/json"
@@ -27,11 +28,11 @@ func NewTopicCache() *TopicCache {
 }
 
 // GetByID 从缓存获取话题
-func (tc *TopicCache) GetByID(id string) (*topic.Topic, error) {
+func (tc *TopicCache) GetByID(ctx context.Context, id string) (*topic.Topic, error) {
 	key := tc.cacheKeyPrefix + id
 	
 	// 从缓存获取
-	data := cache.Get(key)
+	data := cache.Get(ctx, key)
 	dataStr, ok := data.(string)
 	if !ok || dataStr == "" {
 		return nil, nil
@@ -47,7 +48,7 @@ func (tc *TopicCache) GetByID(id string) (*topic.Topic, error) {
 }
 
 // Set 设置话题缓存
-func (tc *TopicCache) Set(topicModel *topic.Topic) error {
+func (tc *TopicCache) Set(ctx context.Context, topicModel *topic.Topic) error {
 	key := tc.cacheKeyPrefix + fmt.Sprintf("%d", topicModel.ID)
 	
 	data, err := json.Marshal(topicModel)
@@ -55,14 +56,14 @@ func (tc *TopicCache) Set(topicModel *topic.Topic) error {
 		return err
 	}
 	
-	cache.Set(key, string(data), tc.cacheTime)
+	cache.Set(ctx, key, string(data), tc.cacheTime)
 	return nil
 }
 
 // Delete 删除话题缓存
-func (tc *TopicCache) Delete(id string) error {
+func (tc *TopicCache) Delete(ctx context.Context, id string) error {
 	key := tc.cacheKeyPrefix + id
-	cache.Forget(key)
+	cache.Forget(ctx, key)
 	return nil
 }
 
@@ -74,10 +75,10 @@ func (tc *TopicCache) GetListCacheKey(c *gin.Context) string {
 }
 
 // GetList 从缓存获取话题列表
-func (tc *TopicCache) GetList(c *gin.Context) ([]topic.Topic, bool) {
+func (tc *TopicCache) GetList(ctx context.Context, c *gin.Context) ([]topic.Topic, bool) {
 	key := tc.GetListCacheKey(c)
 	
-	data := cache.Get(key)
+	data := cache.Get(ctx, key)
 	dataStr, ok := data.(string)
 	if !ok || dataStr == "" {
 		return nil, false
@@ -93,7 +94,7 @@ func (tc *TopicCache) GetList(c *gin.Context) ([]topic.Topic, bool) {
 }
 
 // SetList 设置话题列表缓存
-func (tc *TopicCache) SetList(c *gin.Context, topics []topic.Topic) error {
+func (tc *TopicCache) SetList(ctx context.Context, c *gin.Context, topics []topic.Topic) error {
 	key := tc.GetListCacheKey(c)
 	
 	data, err := json.Marshal(topics)
@@ -101,13 +102,13 @@ func (tc *TopicCache) SetList(c *gin.Context, topics []topic.Topic) error {
 		return err
 	}
 	
-	cache.Set(key, string(data), 10*time.Minute)
+	cache.Set(ctx, key, string(data), 10*time.Minute)
 	return nil
 }
 
 // ClearList 清除话题列表缓存
-func (tc *TopicCache) ClearList() error {
+func (tc *TopicCache) ClearList(ctx context.Context) error {
 	// 简单处理，清空所有缓存
-	cache.Flush()
+	cache.Flush(ctx)
 	return nil
 }

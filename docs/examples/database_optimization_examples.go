@@ -2,6 +2,8 @@
 package examples
 
 import (
+	"context"
+
 	"GoHub-Service/app/models/comment"
 	"GoHub-Service/app/models/topic"
 	"GoHub-Service/app/repositories"
@@ -74,7 +76,7 @@ func ExampleBatchCreateComments() {
 	repo := repositories.NewCommentRepository()
 
 	// ✅ 推荐：使用批量创建方法
-	err := repo.BatchCreate(comments)
+	err := repo.BatchCreate(context.Background(), comments)
 	if err != nil {
 		// 错误处理
 		return
@@ -94,7 +96,7 @@ func ExampleBatchDeleteComments() {
 	repo := repositories.NewCommentRepository()
 
 	// ✅ 推荐：使用批量删除方法
-	err := repo.BatchDelete(ids)
+	err := repo.BatchDelete(context.Background(), ids)
 	if err != nil {
 		// 错误处理
 		return

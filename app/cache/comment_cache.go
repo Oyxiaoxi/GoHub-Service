@@ -2,6 +2,7 @@
 package cache
 
 import (
+	"context"
 	"GoHub-Service/app/models/comment"
 	"GoHub-Service/pkg/cache"
 	"encoding/json"
@@ -27,11 +28,11 @@ func NewCommentCache() *CommentCache {
 }
 
 // GetByID 从缓存获取评论
-func (cc *CommentCache) GetByID(id string) (*comment.Comment, error) {
+func (cc *CommentCache) GetByID(ctx context.Context, id string) (*comment.Comment, error) {
 	key := cc.cacheKeyPrefix + id
 
 	// 从缓存获取
-	data := cache.Get(key)
+	data := cache.Get(ctx, key)
 	dataStr, ok := data.(string)
 	if !ok || dataStr == "" {
 		return nil, nil
@@ -47,7 +48,7 @@ func (cc *CommentCache) GetByID(id string) (*comment.Comment, error) {
 }
 
 // Set 设置评论缓存
-func (cc *CommentCache) Set(commentModel *comment.Comment) error {
+func (cc *CommentCache) Set(ctx context.Context, commentModel *comment.Comment) error {
 	key := cc.cacheKeyPrefix + fmt.Sprintf("%d", commentModel.ID)
 
 	data, err := json.Marshal(commentModel)
@@ -55,22 +56,22 @@ func (cc *CommentCache) Set(commentModel *comment.Comment) error {
 		return err
 	}
 
-	cache.Set(key, string(data), cc.cacheTime)
+	cache.Set(ctx, key, string(data), cc.cacheTime)
 	return nil
 }
 
 // Invalidate 删除评论缓存
-func (cc *CommentCache) Invalidate(id string) error {
+func (cc *CommentCache) Invalidate(ctx context.Context, id string) error {
 	key := cc.cacheKeyPrefix + id
-	cache.Forget(key)
+	cache.Forget(ctx, key)
 	return nil
 }
 
 // GetByTopicID 从缓存获取话题的评论列表
-func (cc *CommentCache) GetByTopicID(topicID string) ([]comment.Comment, error) {
+func (cc *CommentCache) GetByTopicID(ctx context.Context, topicID string) ([]comment.Comment, error) {
 	key := cc.topicCacheKeyPrefix + topicID
 
-	data := cache.Get(key)
+	data := cache.Get(ctx, key)
 	dataStr, ok := data.(string)
 	if !ok || dataStr == "" {
 		return nil, nil
@@ -86,7 +87,7 @@ func (cc *CommentCache) GetByTopicID(topicID string) ([]comment.Comment, error) 
 }
 
 // SetByTopicID 设置话题的评论列表缓存
-func (cc *CommentCache) SetByTopicID(topicID string, comments []comment.Comment) error {
+func (cc *CommentCache) SetByTopicID(ctx context.Context, topicID string, comments []comment.Comment) error {
 	key := cc.topicCacheKeyPrefix + topicID
 
 	data, err := json.Marshal(comments)
@@ -94,19 +95,19 @@ func (cc *CommentCache) SetByTopicID(topicID string, comments []comment.Comment)
 		return err
 	}
 
-	cache.Set(key, string(data), cc.cacheTime)
+	cache.Set(ctx, key, string(data), cc.cacheTime)
 	return nil
 }
 
 // InvalidateByTopicID 删除话题的评论列表缓存
-func (cc *CommentCache) InvalidateByTopicID(topicID string) error {
+func (cc *CommentCache) InvalidateByTopicID(ctx context.Context, topicID string) error {
 	key := cc.topicCacheKeyPrefix + topicID
-	cache.Forget(key)
+	cache.Forget(ctx, key)
 	return nil
 }
 
 // InvalidateAll 清除所有评论相关缓存
-func (cc *CommentCache) InvalidateAll() error {
+func (cc *CommentCache) InvalidateAll(ctx context.Context) error {
 	// 这里可以实现更复杂的缓存清除逻辑
 	// 比如使用 Redis SCAN 命令查找所有相关 key
 	return nil

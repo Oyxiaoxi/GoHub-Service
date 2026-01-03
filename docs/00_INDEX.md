@@ -1,6 +1,6 @@
 # 📚 GoHub-Service 文档中心
 
-**版本**: v2.1 | **更新**: 2026年1月3日 | **文档数**: 14 个 | **零冗余** ✅
+**版本**: v2.2 | **更新**: 2026年1月3日 | **文档数**: 15 个 | **零冗余** ✅
 
 ## 🚀 按角色快速导航
 
@@ -31,7 +31,10 @@
 - **[10_ELASTICSEARCH.md](10_ELASTICSEARCH.md)** - 搜索集成，数据同步
 - **[11_MONITORING.md](11_MONITORING.md)** - 监控告警，Prometheus
 - **[12_FAQ.md](12_FAQ.md)** - 常见问题，故障排查
-- **[13_DATABASE_OPTIMIZATION.md](13_DATABASE_OPTIMIZATION.md)** - 数据库查询优化，批量操作 ⭐️
+
+### 性能优化（进阶） ⭐️
+- **[13_DATABASE_OPTIMIZATION.md](13_DATABASE_OPTIMIZATION.md)** - 数据库查询优化，批量操作
+- **[14_CONTEXT_OPTIMIZATION.md](14_CONTEXT_OPTIMIZATION.md)** - Context 传递优化，超时控制
 
 ## 🎓 推荐学习路径
 

@@ -2,6 +2,7 @@
 package repositories
 
 import (
+	"context"
 	"GoHub-Service/app/models/topic"
 	"GoHub-Service/pkg/paginator"
 	"GoHub-Service/pkg/database"
@@ -12,21 +13,21 @@ import (
 
 // TopicRepository 话题仓储接口
 type TopicRepository interface {
-	GetByID(id string) (*topic.Topic, error)
-	List(c *gin.Context, perPage int) ([]topic.Topic, *paginator.Paging, error)
-	Create(topic *topic.Topic) error
-	Update(topic *topic.Topic) error
-	Delete(id string) error
-	BatchCreate(topics []topic.Topic) error
-	BatchDelete(ids []string) error
+	GetByID(ctx context.Context, id string) (*topic.Topic, error)
+	List(ctx context.Context, c *gin.Context, perPage int) ([]topic.Topic, *paginator.Paging, error)
+	Create(ctx context.Context, topic *topic.Topic) error
+	Update(ctx context.Context, topic *topic.Topic) error
+	Delete(ctx context.Context, id string) error
+	BatchCreate(ctx context.Context, topics []topic.Topic) error
+	BatchDelete(ctx context.Context, ids []string) error
 }
 
 // topicRepository 话题仓储实现
 type topicRepository struct{}
 
 // BatchCreate 批量创建话题（事务包裹）
-func (r *topicRepository) BatchCreate(topics []topic.Topic) error {
-	return database.DB.Transaction(func(tx *gorm.DB) error {
+func (r *topicRepository) BatchCreate(ctx context.Context, topics []topic.Topic) error {
+	return database.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		if err := tx.Create(&topics).Error; err != nil {
 			return err
 		}
@@ -35,8 +36,8 @@ func (r *topicRepository) BatchCreate(topics []topic.Topic) error {
 }
 
 // BatchDelete 批量删除话题（事务包裹）
-func (r *topicRepository) BatchDelete(ids []string) error {
-	return database.DB.Transaction(func(tx *gorm.DB) error {
+func (r *topicRepository) BatchDelete(ctx context.Context, ids []string) error {
+	return database.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		if err := tx.Where("id IN ?", ids).Delete(&topic.Topic{}).Error; err != nil {
 			return err
 		}
@@ -50,7 +51,7 @@ func NewTopicRepository() TopicRepository {
 }
 
 // GetByID 根据ID获取话题
-func (r *topicRepository) GetByID(id string) (*topic.Topic, error) {
+func (r *topicRepository) GetByID(ctx context.Context, id string) (*topic.Topic, error) {
 	topicModel := topic.Get(id)
 	if topicModel.ID == 0 {
 		return nil, nil
@@ -59,13 +60,13 @@ func (r *topicRepository) GetByID(id string) (*topic.Topic, error) {
 }
 
 // List 获取话题列表
-func (r *topicRepository) List(c *gin.Context, perPage int) ([]topic.Topic, *paginator.Paging, error) {
+func (r *topicRepository) List(ctx context.Context, c *gin.Context, perPage int) ([]topic.Topic, *paginator.Paging, error) {
 	data, pager := topic.Paginate(c, perPage)
 	return data, &pager, nil
 }
 
 // Create 创建话题
-func (r *topicRepository) Create(t *topic.Topic) error {
+func (r *topicRepository) Create(ctx context.Context, t *topic.Topic) error {
 	t.Create()
 	if t.ID == 0 {
 		return ErrCreateFailed
@@ -74,7 +75,7 @@ func (r *topicRepository) Create(t *topic.Topic) error {
 }
 
 // Update 更新话题
-func (r *topicRepository) Update(t *topic.Topic) error {
+func (r *topicRepository) Update(ctx context.Context, t *topic.Topic) error {
 	rowsAffected := t.Save()
 	if rowsAffected == 0 {
 		return ErrUpdateFailed
@@ -83,7 +84,7 @@ func (r *topicRepository) Update(t *topic.Topic) error {
 }
 
 // Delete 删除话题
-func (r *topicRepository) Delete(id string) error {
+func (r *topicRepository) Delete(ctx context.Context, id string) error {
 	topicModel := topic.Get(id)
 	if topicModel.ID == 0 {
 		return ErrNotFound

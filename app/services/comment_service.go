@@ -2,6 +2,7 @@
 package services
 
 import (
+	"context"
 	"GoHub-Service/app/cache"
 	"GoHub-Service/app/models/comment"
 	"GoHub-Service/app/repositories"
@@ -94,17 +95,17 @@ func (s *CommentService) toResponseDTOList(comments []comment.Comment) []Comment
 }
 
 // GetByID 根据ID获取评论
-func (s *CommentService) GetByID(id string) (*CommentResponseDTO, *apperrors.AppError) {
+func (s *CommentService) GetByID(ctx context.Context, id string) (*CommentResponseDTO, *apperrors.AppError) {
 	// 尝试从缓存获取
 	if s.cache != nil {
-		commentModel, err := s.cache.GetByID(id)
+		commentModel, err := s.cache.GetByID(ctx, id)
 		if err == nil && commentModel != nil {
 			return s.toResponseDTO(commentModel), nil
 		}
 	}
 
 	// 从仓储获取
-	commentModel, err := s.repo.GetByID(id)
+	commentModel, err := s.repo.GetByID(ctx, id)
 	if err != nil {
 		return nil, apperrors.DatabaseError("获取评论", err)
 	}
@@ -114,15 +115,15 @@ func (s *CommentService) GetByID(id string) (*CommentResponseDTO, *apperrors.App
 
 	// 更新缓存
 	if s.cache != nil {
-		s.cache.Set(commentModel)
+		s.cache.Set(ctx, commentModel)
 	}
 
 	return s.toResponseDTO(commentModel), nil
 }
 
 // List 获取评论列表
-func (s *CommentService) List(c *gin.Context, perPage int) (*CommentListResponseDTO, *apperrors.AppError) {
-	comments, paging, err := s.repo.List(c, perPage)
+func (s *CommentService) List(ctx context.Context, c *gin.Context, perPage int) (*CommentListResponseDTO, *apperrors.AppError) {
+	comments, paging, err := s.repo.List(ctx, c, perPage)
 	if err != nil {
 		return nil, apperrors.DatabaseError("获取评论列表", err)
 	}
@@ -134,17 +135,17 @@ func (s *CommentService) List(c *gin.Context, perPage int) (*CommentListResponse
 }
 
 // ListByTopicID 获取指定话题的评论列表
-func (s *CommentService) ListByTopicID(c *gin.Context, topicID string, perPage int) (*CommentListResponseDTO, *apperrors.AppError) {
+func (s *CommentService) ListByTopicID(ctx context.Context, c *gin.Context, topicID string, perPage int) (*CommentListResponseDTO, *apperrors.AppError) {
 	// 尝试从缓存获取
 	if s.cache != nil {
-		comments, err := s.cache.GetByTopicID(topicID)
+		comments, err := s.cache.GetByTopicID(ctx, topicID)
 		if err == nil && comments != nil {
 			// 缓存命中，但仍需分页处理
 			// 这里简化处理，实际应用中可以优化缓存分页
 		}
 	}
 
-	comments, paging, err := s.repo.ListByTopicID(c, topicID, perPage)
+	comments, paging, err := s.repo.ListByTopicID(ctx, c, topicID, perPage)
 	if err != nil {
 		return nil, apperrors.DatabaseError("获取话题评论列表", err)
 	}
@@ -156,8 +157,8 @@ func (s *CommentService) ListByTopicID(c *gin.Context, topicID string, perPage i
 }
 
 // ListByUserID 获取指定用户的评论列表
-func (s *CommentService) ListByUserID(c *gin.Context, userID string, perPage int) (*CommentListResponseDTO, *apperrors.AppError) {
-	comments, paging, err := s.repo.ListByUserID(c, userID, perPage)
+func (s *CommentService) ListByUserID(ctx context.Context, c *gin.Context, userID string, perPage int) (*CommentListResponseDTO, *apperrors.AppError) {
+	comments, paging, err := s.repo.ListByUserID(ctx, c, userID, perPage)
 	if err != nil {
 		return nil, apperrors.DatabaseError("获取用户评论列表", err)
 	}
@@ -169,8 +170,8 @@ func (s *CommentService) ListByUserID(c *gin.Context, userID string, perPage int
 }
 
 // ListReplies 获取评论的回复列表
-func (s *CommentService) ListReplies(c *gin.Context, parentID string, perPage int) (*CommentListResponseDTO, *apperrors.AppError) {
-	comments, paging, err := s.repo.ListReplies(c, parentID, perPage)
+func (s *CommentService) ListReplies(ctx context.Context, c *gin.Context, parentID string, perPage int) (*CommentListResponseDTO, *apperrors.AppError) {
+	comments, paging, err := s.repo.ListReplies(ctx, c, parentID, perPage)
 	if err != nil {
 		return nil, apperrors.DatabaseError("获取评论回复列表", err)
 	}
@@ -182,7 +183,7 @@ func (s *CommentService) ListReplies(c *gin.Context, parentID string, perPage in
 }
 
 // Create 创建评论
-func (s *CommentService) Create(dto *CommentCreateDTO) (*CommentResponseDTO, *apperrors.AppError) {
+func (s *CommentService) Create(ctx context.Context, dto *CommentCreateDTO) (*CommentResponseDTO, *apperrors.AppError) {
 	// 创建评论模型
 	commentModel := &comment.Comment{
 		TopicID:  dto.TopicID,
@@ -197,21 +198,21 @@ func (s *CommentService) Create(dto *CommentCreateDTO) (*CommentResponseDTO, *ap
 	}
 
 	// 保存到数据库
-	if err := s.repo.Create(commentModel); err != nil {
+	if err := s.repo.Create(ctx, commentModel); err != nil {
 		return nil, apperrors.DatabaseError("创建评论", err)
 	}
 
 	// 发送通知：话题作者、父评论作者
 	if s.notifSvc != nil {
 		// 通知话题作者
-		if topicModel, err := s.topicRepo.GetByID(dto.TopicID); err == nil && topicModel != nil {
+		if topicModel, err := s.topicRepo.GetByID(ctx, dto.TopicID); err == nil && topicModel != nil {
 			if topicModel.UserID != "" && topicModel.UserID != dto.UserID {
 				_ = s.notifSvc.Notify(topicModel.UserID, dto.UserID, "comment_created", map[string]interface{}{"topic_id": dto.TopicID, "comment_id": commentModel.GetStringID()})
 			}
 		}
 		// 通知父评论作者
 		if dto.ParentID != "" && dto.ParentID != "0" {
-			if parent, err := s.repo.GetByID(dto.ParentID); err == nil && parent != nil {
+			if parent, err := s.repo.GetByID(ctx, dto.ParentID); err == nil && parent != nil {
 				if parent.UserID != "" && parent.UserID != dto.UserID {
 					_ = s.notifSvc.Notify(parent.UserID, dto.UserID, "comment_replied", map[string]interface{}{"topic_id": dto.TopicID, "comment_id": commentModel.GetStringID(), "parent_id": dto.ParentID})
 				}
@@ -221,16 +222,16 @@ func (s *CommentService) Create(dto *CommentCreateDTO) (*CommentResponseDTO, *ap
 
 	// 清除相关缓存
 	if s.cache != nil {
-		s.cache.InvalidateByTopicID(dto.TopicID)
+		s.cache.InvalidateByTopicID(ctx, dto.TopicID)
 	}
 
 	return s.toResponseDTO(commentModel), nil
 }
 
 // Update 更新评论
-func (s *CommentService) Update(id string, dto *CommentUpdateDTO) (*CommentResponseDTO, *apperrors.AppError) {
+func (s *CommentService) Update(ctx context.Context, id string, dto *CommentUpdateDTO) (*CommentResponseDTO, *apperrors.AppError) {
 	// 获取评论
-	commentModel, err := s.repo.GetByID(id)
+	commentModel, err := s.repo.GetByID(ctx, id)
 	if err != nil {
 		return nil, apperrors.DatabaseError("获取评论", err)
 	}
@@ -244,23 +245,23 @@ func (s *CommentService) Update(id string, dto *CommentUpdateDTO) (*CommentRespo
 	}
 
 	// 保存更新
-	if err := s.repo.Update(commentModel); err != nil {
+	if err := s.repo.Update(ctx, commentModel); err != nil {
 		return nil, apperrors.DatabaseError("更新评论", err)
 	}
 
 	// 清除缓存
 	if s.cache != nil {
-		s.cache.Invalidate(id)
-		s.cache.InvalidateByTopicID(commentModel.TopicID)
+		s.cache.Invalidate(ctx, id)
+		s.cache.InvalidateByTopicID(ctx, commentModel.TopicID)
 	}
 
 	return s.toResponseDTO(commentModel), nil
 }
 
 // Delete 删除评论
-func (s *CommentService) Delete(id string) *apperrors.AppError {
+func (s *CommentService) Delete(ctx context.Context, id string) *apperrors.AppError {
 	// 获取评论信息用于清除缓存
-	commentModel, err := s.repo.GetByID(id)
+	commentModel, err := s.repo.GetByID(ctx, id)
 	if err != nil {
 		return apperrors.DatabaseError("获取评论", err)
 	}
@@ -269,50 +270,50 @@ func (s *CommentService) Delete(id string) *apperrors.AppError {
 	}
 
 	// 删除评论
-	if err := s.repo.Delete(id); err != nil {
+	if err := s.repo.Delete(ctx, id); err != nil {
 		return apperrors.DatabaseError("删除评论", err)
 	}
 
 	// 清除缓存
 	if s.cache != nil {
-		s.cache.Invalidate(id)
-		s.cache.InvalidateByTopicID(commentModel.TopicID)
+		s.cache.Invalidate(ctx, id)
+		s.cache.InvalidateByTopicID(ctx, commentModel.TopicID)
 	}
 
 	return nil
 }
 
 // LikeComment 点赞评论
-func (s *CommentService) LikeComment(id string) *apperrors.AppError {
-	if err := s.repo.IncrementLikeCount(id); err != nil {
+func (s *CommentService) LikeComment(ctx context.Context, id string) *apperrors.AppError {
+	if err := s.repo.IncrementLikeCount(ctx, id); err != nil {
 		return apperrors.DatabaseError("点赞评论", err)
 	}
 
 	// 清除缓存
 	if s.cache != nil {
-		s.cache.Invalidate(id)
+		s.cache.Invalidate(ctx, id)
 	}
 
 	return nil
 }
 
 // UnlikeComment 取消点赞
-func (s *CommentService) UnlikeComment(id string) *apperrors.AppError {
-	if err := s.repo.DecrementLikeCount(id); err != nil {
+func (s *CommentService) UnlikeComment(ctx context.Context, id string) *apperrors.AppError {
+	if err := s.repo.DecrementLikeCount(ctx, id); err != nil {
 		return apperrors.DatabaseError("取消点赞评论", err)
 	}
 
 	// 清除缓存
 	if s.cache != nil {
-		s.cache.Invalidate(id)
+		s.cache.Invalidate(ctx, id)
 	}
 
 	return nil
 }
 
 // CountByTopicID 统计话题的评论数
-func (s *CommentService) CountByTopicID(topicID string) (int64, *apperrors.AppError) {
-	count, err := s.repo.CountByTopicID(topicID)
+func (s *CommentService) CountByTopicID(ctx context.Context, topicID string) (int64, *apperrors.AppError) {
+	count, err := s.repo.CountByTopicID(ctx, topicID)
 	if err != nil {
 		return 0, apperrors.DatabaseError("统计评论数", err)
 	}

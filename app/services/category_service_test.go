@@ -11,11 +11,13 @@ import (
 
 // MockCategoryRepository 分类仓储Mock
 type MockCategoryRepository struct {
-	GetByIDFunc func(id string) (*category.Category, error)
-	ListFunc    func(c interface{}, perPage int) ([]category.Category, interface{}, error)
-	CreateFunc  func(c *category.Category) error
-	UpdateFunc  func(c *category.Category) error
-	DeleteFunc  func(id string) error
+	GetByIDFunc     func(id string) (*category.Category, error)
+	ListFunc        func(c interface{}, perPage int) ([]category.Category, interface{}, error)
+	CreateFunc      func(c *category.Category) error
+	UpdateFunc      func(c *category.Category) error
+	DeleteFunc      func(id string) error
+	BatchCreateFunc func(categories []category.Category) error
+	BatchDeleteFunc func(ids []string) error
 }
 
 func (m *MockCategoryRepository) GetByID(id string) (*category.Category, error) {
@@ -50,6 +52,32 @@ func (m *MockCategoryRepository) Delete(id string) error {
 	if m.DeleteFunc != nil {
 		return m.DeleteFunc(id)
 	}
+	return nil
+}
+
+func (m *MockCategoryRepository) BatchCreate(categories []category.Category) error {
+	if m.BatchCreateFunc != nil {
+		return m.BatchCreateFunc(categories)
+	}
+	return nil
+}
+
+func (m *MockCategoryRepository) BatchDelete(ids []string) error {
+	if m.BatchDeleteFunc != nil {
+		return m.BatchDeleteFunc(ids)
+	}
+	return nil
+}
+
+func (m *MockCategoryRepository) GetAllCached() ([]category.Category, error) {
+	return []category.Category{}, nil
+}
+
+func (m *MockCategoryRepository) SetListCache(categories []category.Category) error {
+	return nil
+}
+
+func (m *MockCategoryRepository) FlushCache() error {
 	return nil
 }
 
