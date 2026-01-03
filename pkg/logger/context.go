@@ -24,7 +24,7 @@ func LogErrorWithContext(c *gin.Context, err error, message string, fields ...za
 	}
 	
 	// 如果是AppError，添加额外信息
-	if appErr := apperrors.GetAppError(err); appErr != nil {
+	if appErr, ok := apperrors.GetAppError(err); ok && appErr != nil {
 		logFields = append(logFields,
 			zap.String("error_type", string(appErr.Type)),
 			zap.Int("error_code", appErr.Code),

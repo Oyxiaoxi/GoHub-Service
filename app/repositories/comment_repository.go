@@ -3,6 +3,8 @@ package repositories
 
 import (
 	"context"
+	"errors"
+
 	"GoHub-Service/app/models/comment"
 	"GoHub-Service/pkg/database"
 	"GoHub-Service/pkg/paginator"
@@ -153,7 +155,7 @@ func (r *commentRepository) ListReplies(ctx context.Context, c *gin.Context, par
 func (r *commentRepository) Create(ctx context.Context, c *comment.Comment) error {
 	c.Create()
 	if c.ID == 0 {
-		return ErrCreateFailed
+		return NewCreateError("评论", nil)
 	}
 	return nil
 }
@@ -162,7 +164,7 @@ func (r *commentRepository) Create(ctx context.Context, c *comment.Comment) erro
 func (r *commentRepository) Update(ctx context.Context, c *comment.Comment) error {
 	rowsAffected := c.Save()
 	if rowsAffected == 0 {
-		return ErrUpdateFailed
+		return NewUpdateError("评论", c.ID, nil)
 	}
 	return nil
 }
@@ -171,15 +173,15 @@ func (r *commentRepository) Update(ctx context.Context, c *comment.Comment) erro
 func (r *commentRepository) Delete(ctx context.Context, id string) error {
 	var commentModel comment.Comment
 	if err := database.DB.WithContext(ctx).First(&commentModel, id).Error; err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return ErrNotFound
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return NewNotFoundError("评论", id)
 		}
-		return err
+		return NewDeleteError("评论", id, err)
 	}
 
 	rowsAffected := commentModel.Delete()
 	if rowsAffected == 0 {
-		return ErrDeleteFailed
+		return NewDeleteError("评论", id, nil)
 	}
 	return nil
 }

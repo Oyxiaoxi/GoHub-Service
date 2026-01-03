@@ -1,13 +1,13 @@
 # 📚 GoHub-Service 文档中心
 
-**版本**: v2.2 | **更新**: 2026年1月3日 | **文档数**: 15 个 | **零冗余** ✅
+**版本**: v2.3 | **更新**: 2026年1月3日 | **文档数**: 16 个 | **零冗余** ✅
 
 ## 🚀 按角色快速导航
 
 | 角色 | 推荐阅读路径 |
 |------|------------|
 | 🆕 **新开发者** | [01_QUICKSTART](01_QUICKSTART.md) → [02_ARCHITECTURE](02_ARCHITECTURE.md) → [05_DEVELOPMENT](05_DEVELOPMENT.md) |
-| 💻 **后端开发** | [08_API_REFERENCE](08_API_REFERENCE.md) → [13_DATABASE_OPTIMIZATION](13_DATABASE_OPTIMIZATION.md) → [07_PERFORMANCE](07_PERFORMANCE.md) |
+| 💻 **后端开发** | [08_API_REFERENCE](08_API_REFERENCE.md) → [13_DATABASE_OPTIMIZATION](13_DATABASE_OPTIMIZATION.md) → [15_ERROR_HANDLING](15_ERROR_HANDLING.md) |
 | 🔐 **安全审计** | [06_SECURITY](06_SECURITY.md) → [03_RBAC](03_RBAC.md) → [12_FAQ](12_FAQ.md) |
 | 🚀 **运维工程师** | [09_PRODUCTION](09_PRODUCTION.md) → [10_ELASTICSEARCH](10_ELASTICSEARCH.md) → [11_MONITORING](11_MONITORING.md) |
 | 👨‍💼 **项目经理** | [02_ARCHITECTURE](02_ARCHITECTURE.md) → [07_PERFORMANCE](07_PERFORMANCE.md) |
@@ -22,6 +22,8 @@
 
 ### 开发指南（常用）
 - **[05_DEVELOPMENT.md](05_DEVELOPMENT.md)** - 编码规范，单元测试
+- **[04_DATABASE.md](04_DATABASE.md)** - 数据库设计，表结构
+- **[05_DEVELOPMENT.md](05_DEVELOPMENT.md)** - 开发规范，工作流
 - **[06_SECURITY.md](06_SECURITY.md)** - 安全防护，内容审核
 - **[07_PERFORMANCE.md](07_PERFORMANCE.md)** - 性能优化，缓存策略
 - **[08_API_REFERENCE.md](08_API_REFERENCE.md)** - API文档，请求响应
@@ -35,6 +37,7 @@
 ### 性能优化（进阶） ⭐️
 - **[13_DATABASE_OPTIMIZATION.md](13_DATABASE_OPTIMIZATION.md)** - 数据库查询优化，批量操作
 - **[14_CONTEXT_OPTIMIZATION.md](14_CONTEXT_OPTIMIZATION.md)** - Context 传递优化，超时控制
+- **[15_ERROR_HANDLING.md](15_ERROR_HANDLING.md)** - 错误处理机制，错误码管理 🆕
 
 ## 🎓 推荐学习路径
 

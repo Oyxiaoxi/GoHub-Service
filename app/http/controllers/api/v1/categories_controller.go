@@ -65,7 +65,7 @@ func (ctrl *CategoriesController) Update(c *gin.Context) {
     categoryModel, err := ctrl.categoryService.Update(c.Param("id"), dto)
     if err != nil {
         if apperrors.IsAppError(err) {
-            appErr := apperrors.GetAppError(err)
+            appErr, _ := apperrors.GetAppError(err)
             appErr.WithRequestID(middlewares.GetRequestID(c))
             response.Abort404(c)
             return
@@ -103,7 +103,7 @@ func (ctrl *CategoriesController) Delete(c *gin.Context) {
     err := ctrl.categoryService.Delete(c.Param("id"))
     if err != nil {
         if apperrors.IsAppError(err) {
-            appErr := apperrors.GetAppError(err)
+            appErr, _ := apperrors.GetAppError(err)
             appErr.WithRequestID(middlewares.GetRequestID(c))
             response.Abort404(c)
             return

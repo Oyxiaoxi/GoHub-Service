@@ -1,9 +1,11 @@
 package services
 
 import (
+	"fmt"
+
 	"GoHub-Service/app/models/role"
 	"GoHub-Service/app/repositories"
-	"fmt"
+	apperrors "GoHub-Service/pkg/errors"
 )
 
 // RoleService 角色业务逻辑
@@ -59,7 +61,7 @@ func (s *RoleService) CreateRole(dto RoleCreateDTO) (*RoleResponseDTO, error) {
 	// 检查角色是否存在
 	existingRole, _ := s.repo.GetByName(dto.Name)
 	if existingRole != nil {
-		return nil, fmt.Errorf("角色已存在")
+		return nil, apperrors.ConflictError("角色")
 	}
 
 	newRole := &role.Role{
@@ -69,7 +71,7 @@ func (s *RoleService) CreateRole(dto RoleCreateDTO) (*RoleResponseDTO, error) {
 	}
 
 	if err := s.repo.Create(newRole); err != nil {
-		return nil, fmt.Errorf("创建角色失败: %v", err)
+		return nil, apperrors.DatabaseCreateError("角色", err)
 	}
 
 	resp := toRoleResponseDTO(newRole)
@@ -80,7 +82,7 @@ func (s *RoleService) CreateRole(dto RoleCreateDTO) (*RoleResponseDTO, error) {
 func (s *RoleService) GetRoleByID(id uint64) (*RoleResponseDTO, error) {
 	role, err := s.repo.GetByID(id)
 	if err != nil {
-		return nil, fmt.Errorf("角色不存在")
+		return nil, apperrors.NotFoundErrorWithCode(apperrors.CodeRoleNotFound, "角色")
 	}
 
 	resp := toRoleResponseDTO(role)
@@ -121,14 +123,14 @@ func (s *RoleService) GetRolesPaginated(page, perPage int) ([]RoleResponseDTO, i
 func (s *RoleService) UpdateRole(id uint64, dto RoleUpdateDTO) (*RoleResponseDTO, error) {
 	role, err := s.repo.GetByID(id)
 	if err != nil {
-		return nil, fmt.Errorf("角色不存在")
+		return nil, apperrors.NotFoundErrorWithCode(apperrors.CodeRoleNotFound, "角色")
 	}
 
 	// 检查新名称是否被占用
 	if dto.Name != "" && dto.Name != role.Name {
 		existing, _ := s.repo.GetByName(dto.Name)
 		if existing != nil {
-			return nil, fmt.Errorf("角色名称已被使用")
+			return nil, apperrors.ConflictError("角色名称")
 		}
 		role.Name = dto.Name
 	}
@@ -141,7 +143,7 @@ func (s *RoleService) UpdateRole(id uint64, dto RoleUpdateDTO) (*RoleResponseDTO
 	}
 
 	if err := s.repo.Update(role); err != nil {
-		return nil, fmt.Errorf("更新角色失败: %v", err)
+		return nil, apperrors.DatabaseUpdateError("角色", err)
 	}
 
 	resp := toRoleResponseDTO(role)
@@ -153,11 +155,11 @@ func (s *RoleService) DeleteRole(id uint64) error {
 	// 检查角色是否存在
 	_, err := s.repo.GetByID(id)
 	if err != nil {
-		return fmt.Errorf("角色不存在")
+		return apperrors.NotFoundErrorWithCode(apperrors.CodeRoleNotFound, "角色")
 	}
 
 	if err := s.repo.Delete(id); err != nil {
-		return fmt.Errorf("删除角色失败: %v", err)
+		return apperrors.DatabaseDeleteError("角色", err)
 	}
 
 	return nil

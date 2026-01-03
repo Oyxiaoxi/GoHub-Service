@@ -69,7 +69,7 @@ func (r *topicRepository) List(ctx context.Context, c *gin.Context, perPage int)
 func (r *topicRepository) Create(ctx context.Context, t *topic.Topic) error {
 	t.Create()
 	if t.ID == 0 {
-		return ErrCreateFailed
+		return NewCreateError("话题", nil)
 	}
 	return nil
 }
@@ -78,7 +78,7 @@ func (r *topicRepository) Create(ctx context.Context, t *topic.Topic) error {
 func (r *topicRepository) Update(ctx context.Context, t *topic.Topic) error {
 	rowsAffected := t.Save()
 	if rowsAffected == 0 {
-		return ErrUpdateFailed
+		return NewUpdateError("话题", t.ID, nil)
 	}
 	return nil
 }
@@ -87,12 +87,12 @@ func (r *topicRepository) Update(ctx context.Context, t *topic.Topic) error {
 func (r *topicRepository) Delete(ctx context.Context, id string) error {
 	topicModel := topic.Get(id)
 	if topicModel.ID == 0 {
-		return ErrNotFound
+		return NewNotFoundError("话题", id)
 	}
 
 	rowsAffected := topicModel.Delete()
 	if rowsAffected == 0 {
-		return ErrDeleteFailed
+		return NewDeleteError("话题", id, nil)
 	}
 
 	return nil
