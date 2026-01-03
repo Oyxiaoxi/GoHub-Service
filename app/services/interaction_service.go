@@ -3,16 +3,23 @@ package services
 
 import (
 	"context"
+	"time"
+
 	"GoHub-Service/app/repositories"
 	apperrors "GoHub-Service/pkg/errors"
+	"GoHub-Service/pkg/resource"
+
+	"go.uber.org/zap"
 )
 
 // InteractionService 提供点赞、收藏、关注、浏览等互动能力
+// 优化：添加logger用于ContextGuard
 type InteractionService struct {
 	repo      repositories.InteractionRepository
 	topicRepo repositories.TopicRepository
 	userRepo  repositories.UserRepository
 	notifSvc  *NotificationService
+	logger    *zap.Logger
 }
 
 // NewInteractionService 创建互动服务实例
@@ -22,11 +29,17 @@ func NewInteractionService() *InteractionService {
 		topicRepo: repositories.NewTopicRepository(),
 		userRepo:  repositories.NewUserRepository(),
 		notifSvc:  NewNotificationService(),
+		logger:    zap.L(),
 	}
 }
 
 func (s *InteractionService) LikeTopic(userID, topicID string) *apperrors.AppError {
-	topicModel, err := s.topicRepo.GetByID(context.Background(), topicID)
+	// 优化：使用ContextGuard确保超时控制
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	guard := resource.NewContextGuard(ctx, cancel, s.logger)
+	defer guard.Release()
+
+	topicModel, err := s.topicRepo.GetByID(ctx, topicID)
 	if err != nil {
 		return apperrors.WrapError(err, "获取话题失败")
 	}
@@ -39,6 +52,8 @@ func (s *InteractionService) LikeTopic(userID, topicID string) *apperrors.AppErr
 	if s.notifSvc != nil && topicModel.UserID != "" && topicModel.UserID != userID {
 		_ = s.notifSvc.Notify(topicModel.UserID, userID, "topic_like", map[string]interface{}{"topic_id": topicID})
 	}
+
+	guard.Cancel() // 操作完成，提前取消
 	return nil
 }
 
@@ -53,7 +68,12 @@ func (s *InteractionService) UnlikeTopic(userID, topicID string) *apperrors.AppE
 }
 
 func (s *InteractionService) FavoriteTopic(userID, topicID string) *apperrors.AppError {
-	topicModel, err := s.topicRepo.GetByID(context.Background(), topicID)
+	// 优化：使用ContextGuard确保超时控制
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	guard := resource.NewContextGuard(ctx, cancel, s.logger)
+	defer guard.Release()
+
+	topicModel, err := s.topicRepo.GetByID(ctx, topicID)
 	if err != nil {
 		return apperrors.WrapError(err, "获取话题失败")
 	}
@@ -66,6 +86,8 @@ func (s *InteractionService) FavoriteTopic(userID, topicID string) *apperrors.Ap
 	if s.notifSvc != nil && topicModel.UserID != "" && topicModel.UserID != userID {
 		_ = s.notifSvc.Notify(topicModel.UserID, userID, "topic_favorite", map[string]interface{}{"topic_id": topicID})
 	}
+
+	guard.Cancel() // 操作完成，提前取消
 	return nil
 }
 

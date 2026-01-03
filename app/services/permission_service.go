@@ -1,20 +1,36 @@
 package services
 
 import (
+	"fmt"
+
 	"GoHub-Service/app/models/permission"
 	"GoHub-Service/app/repositories"
-	"fmt"
+	"GoHub-Service/pkg/mapper"
 )
 
 // PermissionService 权限业务逻辑
 type PermissionService struct {
-	repo repositories.PermissionRepository
+	repo   repositories.PermissionRepository
+	mapper mapper.Mapper[permission.Permission, PermissionResponseDTO]
 }
 
 // NewPermissionService 创建权限服务
 func NewPermissionService() *PermissionService {
+	converter := func(p *permission.Permission) *PermissionResponseDTO {
+		return &PermissionResponseDTO{
+			ID:          p.ID,
+			Name:        p.Name,
+			DisplayName: p.DisplayName,
+			Description: p.Description,
+			Group:       p.Group,
+			CreatedAt:   p.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
+			UpdatedAt:   p.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
+		}
+	}
+
 	return &PermissionService{
-		repo: repositories.NewPermissionRepository(),
+		repo:   repositories.NewPermissionRepository(),
+		mapper: mapper.NewSimpleMapper(converter),
 	}
 }
 
@@ -45,17 +61,14 @@ type PermissionResponseDTO struct {
 	UpdatedAt   string `json:"updated_at"`
 }
 
-// toPermissionResponseDTO 转换为响应DTO
-func toPermissionResponseDTO(p *permission.Permission) PermissionResponseDTO {
-	return PermissionResponseDTO{
-		ID:          p.ID,
-		Name:        p.Name,
-		DisplayName: p.DisplayName,
-		Description: p.Description,
-		Group:       p.Group,
-		CreatedAt:   p.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
-		UpdatedAt:   p.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
-	}
+// toPermissionResponseDTO 使用Mapper转换为响应DTO
+func (s *PermissionService) toPermissionResponseDTO(p *permission.Permission) *PermissionResponseDTO {
+	return s.mapper.ToDTO(p)
+}
+
+// toPermissionResponseDTOList 批量转换
+func (s *PermissionService) toPermissionResponseDTOList(perms []permission.Permission) []PermissionResponseDTO {
+	return s.mapper.ToDTOList(perms)
 }
 
 // CreatePermission 创建权限
@@ -77,8 +90,7 @@ func (s *PermissionService) CreatePermission(dto PermissionCreateDTO) (*Permissi
 		return nil, fmt.Errorf("创建权限失败: %v", err)
 	}
 
-	resp := toPermissionResponseDTO(newPerm)
-	return &resp, nil
+	return s.toPermissionResponseDTO(newPerm), nil
 }
 
 // GetPermissionByID 根据ID获取权限
@@ -88,8 +100,7 @@ func (s *PermissionService) GetPermissionByID(id uint64) (*PermissionResponseDTO
 		return nil, fmt.Errorf("权限不存在")
 	}
 
-	resp := toPermissionResponseDTO(perm)
-	return &resp, nil
+	return s.toPermissionResponseDTO(perm), nil
 }
 
 // GetAllPermissions 获取所有权限
@@ -99,12 +110,7 @@ func (s *PermissionService) GetAllPermissions() ([]PermissionResponseDTO, error)
 		return nil, fmt.Errorf("获取权限列表失败: %v", err)
 	}
 
-	responses := make([]PermissionResponseDTO, len(perms))
-	for i, p := range perms {
-		responses[i] = toPermissionResponseDTO(&p)
-	}
-
-	return responses, nil
+	return s.toPermissionResponseDTOList(perms), nil
 }
 
 // GetPermissionsPaginated 分页获取权限
@@ -114,13 +120,7 @@ func (s *PermissionService) GetPermissionsPaginated(page, perPage int) ([]Permis
 		return nil, 0, fmt.Errorf("获取权限列表失败: %v", err)
 	}
 
-	// 优化：使用索引访问避免结构体拷贝
-	responses := make([]PermissionResponseDTO, len(perms))
-	for i := range perms {
-		responses[i] = toPermissionResponseDTO(&perms[i])
-	}
-
-	return responses, count, nil
+	return s.toPermissionResponseDTOList(perms), count, nil
 }
 
 // GetPermissionsByGroup 按分组获取权限
@@ -130,13 +130,7 @@ func (s *PermissionService) GetPermissionsByGroup(group string) ([]PermissionRes
 		return nil, fmt.Errorf("获取权限列表失败: %v", err)
 	}
 
-	// 优化：使用索引访问避免结构体拷贝
-	responses := make([]PermissionResponseDTO, len(perms))
-	for i := range perms {
-		responses[i] = toPermissionResponseDTO(&perms[i])
-	}
-
-	return responses, nil
+	return s.toPermissionResponseDTOList(perms), nil
 }
 
 // UpdatePermission 更新权限
@@ -169,8 +163,7 @@ func (s *PermissionService) UpdatePermission(id uint64, dto PermissionUpdateDTO)
 		return nil, fmt.Errorf("更新权限失败: %v", err)
 	}
 
-	resp := toPermissionResponseDTO(perm)
-	return &resp, nil
+	return s.toPermissionResponseDTO(perm), nil
 }
 
 // DeletePermission 删除权限

@@ -6,17 +6,32 @@ import (
 	"GoHub-Service/app/models/role"
 	"GoHub-Service/app/repositories"
 	apperrors "GoHub-Service/pkg/errors"
+	"GoHub-Service/pkg/mapper"
 )
 
 // RoleService 角色业务逻辑
 type RoleService struct {
-	repo repositories.RoleRepository
+	repo   repositories.RoleRepository
+	mapper mapper.Mapper[role.Role, RoleResponseDTO] // 使用泛型Mapper消除DTO转换重复
 }
 
 // NewRoleService 创建角色服务
 func NewRoleService() *RoleService {
+	// 定义DTO转换函数（只需一次）
+	converter := func(r *role.Role) *RoleResponseDTO {
+		return &RoleResponseDTO{
+			ID:          r.ID,
+			Name:        r.Name,
+			DisplayName: r.DisplayName,
+			Description: r.Description,
+			CreatedAt:   r.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
+			UpdatedAt:   r.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
+		}
+	}
+
 	return &RoleService{
-		repo: repositories.NewRoleRepository(),
+		repo:   repositories.NewRoleRepository(),
+		mapper: mapper.NewSimpleMapper(converter),
 	}
 }
 
@@ -44,16 +59,15 @@ type RoleResponseDTO struct {
 	UpdatedAt   string `json:"updated_at"`
 }
 
-// toRoleResponseDTO 转换为响应DTO
-func toRoleResponseDTO(r *role.Role) RoleResponseDTO {
-	return RoleResponseDTO{
-		ID:          r.ID,
-		Name:        r.Name,
-		DisplayName: r.DisplayName,
-		Description: r.Description,
-		CreatedAt:   r.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
-		UpdatedAt:   r.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
-	}
+// toRoleResponseDTO 使用Mapper转换为响应DTO
+// 优化：使用泛型Mapper消除重复代码
+func (s *RoleService) toRoleResponseDTO(r *role.Role) *RoleResponseDTO {
+	return s.mapper.ToDTO(r)
+}
+
+// toRoleResponseDTOList 批量转换
+func (s *RoleService) toRoleResponseDTOList(roles []role.Role) []RoleResponseDTO {
+	return s.mapper.ToDTOList(roles)
 }
 
 // CreateRole 创建角色
@@ -74,8 +88,7 @@ func (s *RoleService) CreateRole(dto RoleCreateDTO) (*RoleResponseDTO, error) {
 		return nil, apperrors.DatabaseCreateError("角色", err)
 	}
 
-	resp := toRoleResponseDTO(newRole)
-	return &resp, nil
+	return s.toRoleResponseDTO(newRole), nil
 }
 
 // GetRoleByID 根据ID获取角色
@@ -85,8 +98,7 @@ func (s *RoleService) GetRoleByID(id uint64) (*RoleResponseDTO, error) {
 		return nil, apperrors.NotFoundErrorWithCode(apperrors.CodeRoleNotFound, "角色")
 	}
 
-	resp := toRoleResponseDTO(role)
-	return &resp, nil
+	return s.toRoleResponseDTO(role), nil
 }
 
 // GetAllRoles 获取所有角色
@@ -96,13 +108,8 @@ func (s *RoleService) GetAllRoles() ([]RoleResponseDTO, error) {
 		return nil, fmt.Errorf("获取角色列表失败: %v", err)
 	}
 
-	// 优化：使用索引访问避免结构体拷贝
-	responses := make([]RoleResponseDTO, len(roles))
-	for i := range roles {
-		responses[i] = toRoleResponseDTO(&roles[i])
-	}
-
-	return responses, nil
+	// 优化：使用泛型Mapper批量转换
+	return s.toRoleResponseDTOList(roles), nil
 }
 
 // GetRolesPaginated 分页获取角色
@@ -112,13 +119,8 @@ func (s *RoleService) GetRolesPaginated(page, perPage int) ([]RoleResponseDTO, i
 		return nil, 0, fmt.Errorf("获取角色列表失败: %v", err)
 	}
 
-	// 优化：使用索引访问避免结构体拷贝
-	responses := make([]RoleResponseDTO, len(roles))
-	for i := range roles {
-		responses[i] = toRoleResponseDTO(&roles[i])
-	}
-
-	return responses, count, nil
+	// 优化：使用泛型Mapper批量转换
+	return s.toRoleResponseDTOList(roles), count, nil
 }
 
 // UpdateRole 更新角色
@@ -148,8 +150,7 @@ func (s *RoleService) UpdateRole(id uint64, dto RoleUpdateDTO) (*RoleResponseDTO
 		return nil, apperrors.DatabaseUpdateError("角色", err)
 	}
 
-	resp := toRoleResponseDTO(role)
-	return &resp, nil
+	return s.toRoleResponseDTO(role), nil
 }
 
 // DeleteRole 删除角色
