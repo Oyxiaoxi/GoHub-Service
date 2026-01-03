@@ -9,6 +9,8 @@ import (
 	"time"
 
 	"GoHub-Service/pkg/config"
+	"GoHub-Service/pkg/logger"
+	"GoHub-Service/pkg/metrics"
 	"GoHub-Service/pkg/redis"
 	"GoHub-Service/pkg/response"
 	"GoHub-Service/pkg/security"
@@ -50,6 +52,9 @@ func APISignatureVerification() gin.HandlerFunc {
 	validator := getSignatureValidator()
 
 	return func(c *gin.Context) {
+		start := time.Now()
+		endpoint := c.Request.URL.Path
+
 		// 1. 获取签名相关参数
 		timestampStr := c.GetHeader("X-Timestamp")
 		nonce := c.GetHeader("X-Nonce")
@@ -57,6 +62,14 @@ func APISignatureVerification() gin.HandlerFunc {
 
 		// 2. 检查必需参数
 		if timestampStr == "" || nonce == "" || signature == "" {
+			metrics.RecordSignatureVerification(endpoint, false, time.Since(start))
+			metrics.RecordSignatureFailure(endpoint, "missing_parameters")
+			logger.WarnJSON("Signature", "Missing Parameters", map[string]interface{}{
+				"endpoint":  endpoint,
+				"method":    c.Request.Method,
+				"client_ip": c.ClientIP(),
+				"reason":    "missing_parameters",
+			})
 			response.ApiError(c, 401, response.CodeUnauthorized,
 				"缺少签名参数 (X-Timestamp, X-Nonce, X-Signature)")
 			return
@@ -65,6 +78,15 @@ func APISignatureVerification() gin.HandlerFunc {
 		// 3. 解析时间戳
 		timestamp, err := strconv.ParseInt(timestampStr, 10, 64)
 		if err != nil {
+			metrics.RecordSignatureVerification(endpoint, false, time.Since(start))
+			metrics.RecordSignatureFailure(endpoint, "invalid_timestamp")
+			logger.WarnJSON("Signature", "Invalid Timestamp", map[string]interface{}{
+				"endpoint":  endpoint,
+				"method":    c.Request.Method,
+				"client_ip": c.ClientIP(),
+				"reason":    "invalid_timestamp",
+				"timestamp": timestampStr,
+			})
 			response.ApiError(c, 401, response.CodeUnauthorized,
 				"时间戳格式错误")
 			return
@@ -73,6 +95,16 @@ func APISignatureVerification() gin.HandlerFunc {
 		// 4. 检查 Nonce 是否已使用（防重放）
 		nonceKey := "api:nonce:" + nonce
 		if redis.Redis.Has(c.Request.Context(), nonceKey) {
+			metrics.RecordSignatureVerification(endpoint, false, time.Since(start))
+			metrics.RecordSignatureFailure(endpoint, "replay_attack")
+			metrics.RecordReplayAttempt(endpoint)
+			logger.WarnJSON("Signature", "Replay Attack Detected", map[string]interface{}{
+				"endpoint":  endpoint,
+				"method":    c.Request.Method,
+				"client_ip": c.ClientIP(),
+				"nonce":     nonce[:8] + "...",
+				"timestamp": timestamp,
+			})
 			response.ApiError(c, 401, response.CodeUnauthorized,
 				"请求已被处理（重放攻击检测）")
 			return
@@ -83,6 +115,8 @@ func APISignatureVerification() gin.HandlerFunc {
 		if c.Request.Method != "GET" {
 			bodyBytes, err := io.ReadAll(c.Request.Body)
 			if err != nil {
+				metrics.RecordSignatureVerification(endpoint, false, time.Since(start))
+				metrics.RecordSignatureFailure(endpoint, "read_body_error")
 				response.ApiError(c, 400, response.CodeInvalidParams,
 					"读取请求体失败")
 				return
@@ -98,6 +132,16 @@ func APISignatureVerification() gin.HandlerFunc {
 		result := validator.VerifySignature(method, path, timestamp, nonce, body, signature)
 
 		if !result.IsValid {
+			metrics.RecordSignatureVerification(endpoint, false, time.Since(start))
+			metrics.RecordSignatureFailure(endpoint, result.RiskType)
+			logger.WarnJSON("Signature", "Verification Failed", map[string]interface{}{
+				"endpoint":  endpoint,
+				"method":    method,
+				"client_ip": c.ClientIP(),
+				"reason":    result.Reason,
+				"risk_type": result.RiskType,
+				"timestamp": timestamp,
+			})
 			response.ApiError(c, 401, response.CodeUnauthorized,
 				"签名验证失败: "+result.Reason)
 			return
@@ -110,6 +154,9 @@ func APISignatureVerification() gin.HandlerFunc {
 			"1",
 			5*time.Minute,
 		)
+
+		// 8. 记录成功指标
+		metrics.RecordSignatureVerification(endpoint, true, time.Since(start))
 
 		c.Next()
 	}

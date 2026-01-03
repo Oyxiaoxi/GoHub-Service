@@ -1,0 +1,244 @@
+{
+	"info": {
+		"name": "GoHub API 签名验证测试",
+		"description": "测试 API 签名验证功能",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:3000",
+			"type": "string"
+		},
+		{
+			"key": "signature_secret",
+			"value": "your-secret-key-12345678",
+			"type": "string"
+		},
+		{
+			"key": "jwt_token",
+			"value": "YOUR_JWT_TOKEN_HERE",
+			"type": "string"
+		}
+	],
+	"item": [
+		{
+			"name": "1. 修改密码（正确签名）",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"// 生成时间戳和 Nonce",
+							"const timestamp = Math.floor(Date.now() / 1000);",
+							"const nonce = Array.from({length: 16}, () => 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'.charAt(Math.floor(Math.random() * 62))).join('');",
+							"",
+							"// 请求参数",
+							"const method = 'PUT';",
+							"const path = '/api/v1/users/password';",
+							"const body = JSON.stringify(JSON.parse(pm.request.body.raw));",
+							"",
+							"// 构建签名字符串",
+							"const signString = `${method}\\n${path}\\n${timestamp}\\n${nonce}\\n${body}`;",
+							"",
+							"// 生成签名（需要 crypto-js 库）",
+							"const CryptoJS = require('crypto-js');",
+							"const secret = pm.collectionVariables.get('signature_secret');",
+							"const signature = CryptoJS.HmacSHA256(signString, secret).toString();",
+							"",
+							"// 设置请求头",
+							"pm.request.headers.add({key: 'X-Timestamp', value: timestamp.toString()});",
+							"pm.request.headers.add({key: 'X-Nonce', value: nonce});",
+							"pm.request.headers.add({key: 'X-Signature', value: signature});",
+							"",
+							"console.log('Signature String:', signString);",
+							"console.log('Signature:', signature);"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Authorization",
+						"value": "Bearer {{jwt_token}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"old_password\": \"123456\",\n  \"new_password\": \"newpass123\"\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/api/v1/users/password",
+					"host": ["{{base_url}}"],
+					"path": ["api", "v1", "users", "password"]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "2. 修改邮箱（签名不匹配）",
+			"request": {
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Authorization",
+						"value": "Bearer {{jwt_token}}"
+					},
+					{
+						"key": "X-Timestamp",
+						"value": "{{$timestamp}}"
+					},
+					{
+						"key": "X-Nonce",
+						"value": "abcdef1234567890"
+					},
+					{
+						"key": "X-Signature",
+						"value": "invalid_signature_1234567890abcdef"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"email\": \"test@example.com\",\n  \"verify_code\": \"123456\"\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/api/v1/users/email",
+					"host": ["{{base_url}}"],
+					"path": ["api", "v1", "users", "email"]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "3. 修改手机号（时间戳过期）",
+			"request": {
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Authorization",
+						"value": "Bearer {{jwt_token}}"
+					},
+					{
+						"key": "X-Timestamp",
+						"value": "1000000000",
+						"description": "10分钟前的时间戳"
+					},
+					{
+						"key": "X-Nonce",
+						"value": "expired_nonce_test"
+					},
+					{
+						"key": "X-Signature",
+						"value": "signature_will_fail"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"phone\": \"13800138000\",\n  \"verify_code\": \"123456\"\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/api/v1/users/phone",
+					"host": ["{{base_url}}"],
+					"path": ["api", "v1", "users", "phone"]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "4. 登录（可选签名 - 无签名）",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"login_id\": \"testuser\",\n  \"password\": \"123456\"\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/api/v1/auth/login/using-password",
+					"host": ["{{base_url}}"],
+					"path": ["api", "v1", "auth", "login", "using-password"]
+				},
+				"description": "可选签名接口，无签名也可以访问"
+			},
+			"response": []
+		},
+		{
+			"name": "5. 密码重置（强制签名）",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"const timestamp = Math.floor(Date.now() / 1000);",
+							"const nonce = Array.from({length: 16}, () => 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'.charAt(Math.floor(Math.random() * 62))).join('');",
+							"const method = 'POST';",
+							"const path = '/api/v1/auth/password-reset/using-email';",
+							"const body = JSON.stringify(JSON.parse(pm.request.body.raw));",
+							"const signString = `${method}\\n${path}\\n${timestamp}\\n${nonce}\\n${body}`;",
+							"const CryptoJS = require('crypto-js');",
+							"const secret = pm.collectionVariables.get('signature_secret');",
+							"const signature = CryptoJS.HmacSHA256(signString, secret).toString();",
+							"pm.request.headers.add({key: 'X-Timestamp', value: timestamp.toString()});",
+							"pm.request.headers.add({key: 'X-Nonce', value: nonce});",
+							"pm.request.headers.add({key: 'X-Signature', value: signature});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"email\": \"test@example.com\",\n  \"verify_code\": \"123456\",\n  \"password\": \"newpassword123\"\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/api/v1/auth/password-reset/using-email",
+					"host": ["{{base_url}}"],
+					"path": ["api", "v1", "auth", "password-reset", "using-email"]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "6. 查看 Prometheus 指标",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/metrics",
+					"host": ["{{base_url}}"],
+					"path": ["metrics"]
+				},
+				"description": "查看签名验证相关的 Prometheus 指标"
+			},
+			"response": []
+		}
+	]
+}

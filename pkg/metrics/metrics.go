@@ -74,6 +74,42 @@ var (
 		},
 		[]string{"error_type"},
 	)
+
+	// APISignatureVerifications API 签名验证总数
+	APISignatureVerifications = promauto.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "gohub_api_signature_verifications_total",
+			Help: "Total number of API signature verification attempts",
+		},
+		[]string{"endpoint", "result"}, // result: success/failure
+	)
+
+	// APISignatureFailures API 签名验证失败总数
+	APISignatureFailures = promauto.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "gohub_api_signature_failures_total",
+			Help: "Total number of API signature verification failures",
+		},
+		[]string{"endpoint", "reason"}, // reason: signature_mismatch/timestamp_expired/nonce_invalid/replay_attack
+	)
+
+	// APISignatureVerificationDuration API 签名验证耗时
+	APISignatureVerificationDuration = promauto.NewHistogram(
+		prometheus.HistogramOpts{
+			Name:    "gohub_api_signature_verification_duration_seconds",
+			Help:    "API signature verification duration in seconds",
+			Buckets: []float64{.00001, .00005, .0001, .0005, .001, .005, .01},
+		},
+	)
+
+	// ReplayAttemptsTotal 重放攻击尝试总数
+	ReplayAttemptsTotal = promauto.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "gohub_replay_attacks_total",
+			Help: "Total number of replay attack attempts detected",
+		},
+		[]string{"endpoint"},
+	)
 )
 
 // PrometheusMiddleware Prometheus 指标收集中间件
@@ -133,4 +169,24 @@ func RecordDBQuery(operation string, duration time.Duration) {
 // RecordError 记录错误
 func RecordError(errorType string) {
 	ErrorsTotal.WithLabelValues(errorType).Inc()
+}
+
+// RecordSignatureVerification 记录签名验证
+func RecordSignatureVerification(endpoint string, success bool, duration time.Duration) {
+	result := "success"
+	if !success {
+		result = "failure"
+	}
+	APISignatureVerifications.WithLabelValues(endpoint, result).Inc()
+	APISignatureVerificationDuration.Observe(duration.Seconds())
+}
+
+// RecordSignatureFailure 记录签名验证失败
+func RecordSignatureFailure(endpoint, reason string) {
+	APISignatureFailures.WithLabelValues(endpoint, reason).Inc()
+}
+
+// RecordReplayAttempt 记录重放攻击尝试
+func RecordReplayAttempt(endpoint string) {
+	ReplayAttemptsTotal.WithLabelValues(endpoint).Inc()
 }
