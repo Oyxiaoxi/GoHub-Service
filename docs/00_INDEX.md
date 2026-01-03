@@ -1,6 +1,6 @@
 # 📚 GoHub-Service 文档中心
 
-**版本**: v2.9 | **更新**: 2026年1月3日 | **文档数**: 21 个 | **零冗余** ✅
+**版本**: v3.0 | **更新**: 2026年1月3日 | **文档数**: 22 个 | **零冗余** ✅
 
 ## 🚀 按角色快速导航
 
@@ -85,7 +85,8 @@
 | 内存优化 | [17_MEMORY_OPTIMIZATION.md](17_MEMORY_OPTIMIZATION.md) |
 | 连接池优化 | [18_DATABASE_POOL_OPTIMIZATION.md](18_DATABASE_POOL_OPTIMIZATION.md) |
 | 日志优化 | [19_LOG_OPTIMIZATION.md](19_LOG_OPTIMIZATION.md) |
-| 资源泄漏防护 🆕 | [20_RESOURCE_LEAK_PROTECTION.md](20_RESOURCE_LEAK_PROTECTION.md) |
+| 资源泄漏防护 | [20_RESOURCE_LEAK_PROTECTION.md](20_RESOURCE_LEAK_PROTECTION.md) |
+| 代码重复消除 🆕 | [21_CODE_DEDUPLICATION.md](21_CODE_DEDUPLICATION.md) |
 
 ## ✨ 文档特性
 
