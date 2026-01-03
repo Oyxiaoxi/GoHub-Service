@@ -67,12 +67,24 @@ func RegisterAPIRoutes(r *gin.Engine) {
 		middlewares.RateLimitMiddleware(20), // 每分钟最多20次请求（IP级别自动封禁）
 	)
 	{
-		authGroup.POST("/login/using-phone", middlewares.GuestJWT(), loginCtrl.LoginByPhone)
-		authGroup.POST("/login/using-password", middlewares.GuestJWT(), loginCtrl.LoginByPassword)
+		// 登录接口 - 可选签名验证（兼容旧客户端）
+		authGroup.POST("/login/using-phone", 
+			middlewares.GuestJWT(), 
+			middlewares.OptionalSignatureVerification(),
+			loginCtrl.LoginByPhone,
+		)
+		authGroup.POST("/login/using-password", 
+			middlewares.GuestJWT(), 
+			middlewares.OptionalSignatureVerification(),
+			loginCtrl.LoginByPassword,
+		)
 		authGroup.POST("/login/refresh-token", middlewares.AuthJWT(), loginCtrl.RefreshToken)
 
-		// 密码重置 - 敏感操作，使用更严格的限流
-		sensitiveGroup := authGroup.Group("/password-reset", middlewares.RateLimitMiddleware(5)) // 每分钟5次
+		// 密码重置 - 敏感操作，必须使用签名验证
+		sensitiveGroup := authGroup.Group("/password-reset", 
+			middlewares.RateLimitMiddleware(5), // 每分钟5次
+			middlewares.APISignatureVerification(), // 强制签名验证
+		)
 		{
 			sensitiveGroup.POST("/using-email", middlewares.GuestJWT(), passwordCtrl.ResetByEmail)
 			sensitiveGroup.POST("/using-phone", middlewares.GuestJWT(), passwordCtrl.ResetByPhone)

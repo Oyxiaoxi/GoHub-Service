@@ -42,12 +42,26 @@ func RegisterAdminRoutes(r *gin.Engine) {
 			users.GET("", userController.Index)           // 用户列表
 			users.GET("/:id", userController.Show)        // 用户详情
 			users.PUT("/:id", userController.Update)      // 更新用户
-			users.DELETE("/:id", userController.Delete)   // 删除用户
-			users.POST("/batch-delete", userController.BatchDelete) // 批量删除
+			
+			// 危险操作应用签名验证
+			users.DELETE("/:id", 
+				middlewares.APISignatureVerification(),
+				userController.Delete,
+			) // 删除用户
+			users.POST("/batch-delete", 
+				middlewares.APISignatureVerification(),
+				userController.BatchDelete,
+			) // 批量删除
 			
 			// 用户操作
-			users.POST("/:id/ban", userController.Ban)              // 封禁用户
-			users.POST("/:id/unban", userController.Unban)          // 解封用户
+			users.POST("/:id/ban", 
+				middlewares.APISignatureVerification(),
+				userController.Ban,
+			)              // 封禁用户
+			users.POST("/:id/unban", 
+				middlewares.APISignatureVerification(),
+				userController.Unban,
+			)          // 解封用户
 			users.POST("/:id/reset-password", userController.ResetPassword) // 重置密码
 			users.POST("/:id/assign-role", userController.AssignRole)       // 分配角色
 		}

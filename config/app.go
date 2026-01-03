@@ -30,6 +30,9 @@ func init() {
 
             // API 域名，未设置的话所有 API URL 加 api 前缀，如 http://domain.com/api/v1/users
             "api_domain": config.Env("API_DOMAIN"),
+
+            // API 签名验证密钥（用于防重放攻击和数据篡改）
+            "signature_secret": config.Env("SIGNATURE_SECRET", config.Env("APP_KEY", "33446a9dcf9ea060a0a6532b166da32f304af0de")),
         }
     })
 }

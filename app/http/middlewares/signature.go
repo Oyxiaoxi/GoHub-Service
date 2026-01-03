@@ -72,8 +72,7 @@ func APISignatureVerification() gin.HandlerFunc {
 
 		// 4. 检查 Nonce 是否已使用（防重放）
 		nonceKey := "api:nonce:" + nonce
-		exists, _ := redis.Redis.Exists(redis.RedisClient.Context(), nonceKey).Result()
-		if exists > 0 {
+		if redis.Redis.Has(c.Request.Context(), nonceKey) {
 			response.ApiError(c, 401, response.CodeUnauthorized,
 				"请求已被处理（重放攻击检测）")
 			return
@@ -106,7 +105,7 @@ func APISignatureVerification() gin.HandlerFunc {
 
 		// 7. 记录 Nonce（5分钟有效期）
 		redis.Redis.Set(
-			redis.RedisClient.Context(),
+			c.Request.Context(),
 			nonceKey,
 			"1",
 			5*time.Minute,
@@ -141,8 +140,7 @@ func APISignatureVerificationWithQuery() gin.HandlerFunc {
 
 		// 2. 检查 Nonce 是否已使用
 		nonceKey := "api:nonce:" + nonce
-		exists, _ := redis.Redis.Exists(redis.RedisClient.Context(), nonceKey).Result()
-		if exists > 0 {
+		if redis.Redis.Has(c.Request.Context(), nonceKey) {
 			response.ApiError(c, 401, response.CodeUnauthorized,
 				"请求已被处理（重放攻击检测）")
 			return
@@ -169,7 +167,7 @@ func APISignatureVerificationWithQuery() gin.HandlerFunc {
 
 		// 5. 记录 Nonce
 		redis.Redis.Set(
-			redis.RedisClient.Context(),
+			c.Request.Context(),
 			nonceKey,
 			"1",
 			5*time.Minute,

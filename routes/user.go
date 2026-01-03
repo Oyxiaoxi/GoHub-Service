@@ -18,9 +18,22 @@ func RegisterUserRoutes(rg *gin.RouterGroup, usersCtrl *v1.UsersController) {
 			middlewares.SensitiveWordFilter(),
 			usersCtrl.UpdateProfile,
 		)
-		usersGroup.PUT("/email", middlewares.AuthJWT(), usersCtrl.UpdateEmail)
-		usersGroup.PUT("/phone", middlewares.AuthJWT(), usersCtrl.UpdatePhone)
-		usersGroup.PUT("/password", middlewares.AuthJWT(), usersCtrl.UpdatePassword)
+		// 敏感信息修改应用签名验证（防重放攻击）
+		usersGroup.PUT("/email", 
+			middlewares.AuthJWT(), 
+			middlewares.APISignatureVerification(),
+			usersCtrl.UpdateEmail,
+		)
+		usersGroup.PUT("/phone", 
+			middlewares.AuthJWT(), 
+			middlewares.APISignatureVerification(),
+			usersCtrl.UpdatePhone,
+		)
+		usersGroup.PUT("/password", 
+			middlewares.AuthJWT(), 
+			middlewares.APISignatureVerification(),
+			usersCtrl.UpdatePassword,
+		)
 		// 头像上传应用安全检查
 		usersGroup.PUT("/avatar", 
 			middlewares.AuthJWT(), 

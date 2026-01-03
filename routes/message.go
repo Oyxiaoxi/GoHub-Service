@@ -13,7 +13,11 @@ func RegisterMessageRoutes(r *gin.RouterGroup) {
 
 	group := r.Group("/messages", middlewares.AuthJWT())
 	{
-		group.POST("", controller.Send)
+		// 私信发送应用签名验证（防止批量发送垃圾私信）
+		group.POST("", 
+			middlewares.APISignatureVerification(),
+			controller.Send,
+		)
 		group.GET("", controller.Conversation)
 		group.POST("/read", controller.MarkRead)
 		group.GET("/unread-count", controller.UnreadCount)
