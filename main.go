@@ -1,3 +1,20 @@
+// Package main GoHub-Service API
+// @title GoHub-Service API
+// @version 1.0
+// @description GoHub 社区论坛 API 文档
+// @termsOfService https://github.com/Oyxiaoxi/GoHub-Service
+// @contact.name API Support
+// @contact.url https://github.com/Oyxiaoxi/GoHub-Service/issues
+// @contact.email support@gohub.com
+// @license.name MIT
+// @license.url https://opensource.org/licenses/MIT
+// @host localhost:3000
+// @BasePath /api/v1
+// @schemes http https
+// @securityDefinitions.apikey Bearer
+// @in header
+// @name Authorization
+// @description Type "Bearer" followed by a space and JWT token.
 package main
 
 import (
@@ -5,6 +22,7 @@ import (
 	"GoHub-Service/app/cmd/make"
 	"GoHub-Service/bootstrap"
 	_ "GoHub-Service/config"
+	_ "GoHub-Service/docs" // Swagger 文档
 	"GoHub-Service/pkg/appconfig"
 	"GoHub-Service/pkg/config"
 	"GoHub-Service/pkg/console"

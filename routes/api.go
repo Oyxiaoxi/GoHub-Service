@@ -4,18 +4,27 @@ package routes
 import (
 	"GoHub-Service/app/http/controllers/api/v1/auth"
 	"GoHub-Service/app/http/middlewares"
+	"GoHub-Service/pkg/apiversion"
 	"GoHub-Service/pkg/config"
 	"GoHub-Service/pkg/metrics"
 
 	controllers "GoHub-Service/app/http/controllers/api/v1"
 
 	"github.com/gin-gonic/gin"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
 // RegisterAPIRoutes 注册 API 相关路由
 func RegisterAPIRoutes(r *gin.Engine) {
 	// Prometheus 指标端点
 	r.GET("/metrics", metrics.Handler())
+
+	// Swagger 文档端点
+	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+
+	// API 版本信息端点
+	r.GET("/api/versions", apiversion.GetVersionInfo())
 
 	// 测试一个 v1 的路由组，我们所有的 v1 版本的路由都将存放到这里
 	var v1 *gin.RouterGroup
@@ -28,6 +37,7 @@ func RegisterAPIRoutes(r *gin.Engine) {
 	v1.Use(
 		middlewares.RequestID(),
 		middlewares.LimitIP(config.GetString("limiter.global_ip_rate", "200-H")),
+		apiversion.VersionDeprecated("v1"), // 版本管理中间件
 	)
 
 	// 控制器实例化，便于复用

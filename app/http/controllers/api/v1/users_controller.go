@@ -27,12 +27,31 @@ func NewUsersController() *UsersController {
 }
 
 // CurrentUser 当前登录用户信息
+// @Summary 获取当前用户信息
+// @Description 返回当前登录用户的详细信息
+// @Tags 用户管理
+// @Accept json
+// @Produce json
+// @Security Bearer
+// @Success 200 {object} response.Response "成功"
+// @Failure 401 {object} response.Response "未授权"
+// @Router /user [get]
 func (ctrl *UsersController) CurrentUser(c *gin.Context) {
 	userModel := auth.CurrentUser(c)
 	response.Data(c, userModel)
 }
 
 // Index 所有用户
+// @Summary 获取用户列表
+// @Description 分页获取用户列表
+// @Tags 用户管理
+// @Accept json
+// @Produce json
+// @Param page query int false "页码" default(1)
+// @Param per_page query int false "每页数量" default(20)
+// @Param order query string false "排序方式" default(id)
+// @Success 200 {object} response.Response "成功"
+// @Router /users [get]
 func (ctrl *UsersController) Index(c *gin.Context) {
 	request := requests.PaginationRequest{}
 	if ok := requests.Validate(c, &request, requests.Pagination); !ok {
@@ -51,6 +70,18 @@ func (ctrl *UsersController) Index(c *gin.Context) {
 	})
 }
 
+// UpdateProfile 更新用户资料
+// @Summary 更新当前用户资料
+// @Description 更新当前登录用户的个人资料
+// @Tags 用户管理
+// @Accept json
+// @Produce json
+// @Security Bearer
+// @Param profile body requests.UserUpdateProfileRequest true "用户资料"
+// @Success 200 {object} response.Response "成功"
+// @Failure 401 {object} response.Response "未授权"
+// @Failure 422 {object} response.Response "验证失败"
+// @Router /users/profile [put]
 func (ctrl *UsersController) UpdateProfile(c *gin.Context) {
 
 	request := requests.UserUpdateProfileRequest{}

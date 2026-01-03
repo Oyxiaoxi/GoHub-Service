@@ -1,0 +1,19 @@
+# Makefile
+
+.PHONY: swagger
+swagger:
+	@echo "Generating Swagger documentation..."
+	@swag init --parseDependency --parseInternal
+	@echo "Swagger documentation generated successfully!"
+
+.PHONY: swagger-fmt
+swagger-fmt:
+	@echo "Formatting Swagger comments..."
+	@swag fmt
+	@echo "Swagger comments formatted!"
+
+.PHONY: help
+help:
+	@echo "Available commands:"
+	@echo "  make swagger     - Generate Swagger documentation"
+	@echo "  make swagger-fmt - Format Swagger comments"
