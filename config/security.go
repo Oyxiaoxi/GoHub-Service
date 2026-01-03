@@ -18,11 +18,8 @@ func init() {
 			// 是否启用 XSS 防护
 			"xss_protection_enabled": config.Env("XSS_PROTECTION_ENABLED", true),
 
-			// 内容最大长度限制
-			"max_content_length": config.Env("MAX_CONTENT_LENGTH", 10000),
-
-			// 标题最大长度限制
-			"max_title_length": config.Env("MAX_TITLE_LENGTH", 200),
+			// 注意：内容长度限制、标题长度等业务常量已移至 config/app_constants.go
+			// 请使用 appconfig.GetCommentMaxLength(), appconfig.GetTopicTitleMaxLength() 等方法访问
 
 			// 是否允许 HTML 标签
 			"allow_html_tags": config.Env("ALLOW_HTML_TAGS", false),
@@ -44,8 +41,8 @@ func init() {
 			// 允许的图片格式
 			"allowed_image_types": []string{"jpg", "jpeg", "png", "gif", "webp"},
 
-			// 图片最大尺寸（字节）
-			"max_image_size": config.Env("MAX_IMAGE_SIZE", 2*1024*1024), // 2MB
+			// 注意：图片大小限制已移至 config/app_constants.go
+			// 请使用 appconfig.GetMaxImageSizeBytes() 方法访问
 
 			// 是否启用内容审核日志
 			"audit_log_enabled": config.Env("AUDIT_LOG_ENABLED", true),

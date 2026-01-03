@@ -5,6 +5,7 @@ import (
 	"GoHub-Service/app/cmd/make"
 	"GoHub-Service/bootstrap"
 	_ "GoHub-Service/config"
+	"GoHub-Service/pkg/appconfig"
 	"GoHub-Service/pkg/config"
 	"GoHub-Service/pkg/console"
 	"fmt"
@@ -45,8 +46,10 @@ func main() {
 
 			// 启动资源泄漏定期报告（仅在 serve 命令时启动）
 			if command.Name() == "serve" {
-				// 5分钟未释放的资源视为可能泄漏，每1分钟检查一次
-				bootstrap.StartTrackerReporting(5*time.Minute, 1*time.Minute)
+				// 从配置读取阈值和检查间隔
+				threshold := time.Duration(appconfig.GetResourceLeakThresholdMinutes()) * time.Minute
+				interval := time.Duration(appconfig.GetCheckIntervalMinutes()) * time.Minute
+				bootstrap.StartTrackerReporting(threshold, interval)
 			}
 		},
 	}

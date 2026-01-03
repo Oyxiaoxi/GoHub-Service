@@ -1,6 +1,7 @@
 package middlewares
 
 import (
+	"GoHub-Service/pkg/appconfig"
 	"GoHub-Service/pkg/logger"
 	"GoHub-Service/pkg/resource"
 	"fmt"
@@ -47,8 +48,9 @@ func ResourceTracking() gin.HandlerFunc {
 		// 记录处理时间
 		duration := time.Since(startTime)
 
-		// 如果处理时间过长，记录警告
-		if duration > 30*time.Second {
+		// 如果处理时间过长，记录警告（从配置读取阈值）
+		timeoutWarning := time.Duration(appconfig.GetHTTPTimeoutWarningSeconds()) * time.Second
+		if duration > timeoutWarning {
 			logger.Logger.Warn("HTTP请求处理时间过长",
 				zap.String("request_id", requestID),
 				zap.String("method", c.Request.Method),
