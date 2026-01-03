@@ -70,7 +70,8 @@ func (ctrl *CategoriesController) Store(c *gin.Context) {
 // @Success 200 {object} response.Response "成功"
 // @Failure 404 {object} response.Response "分类不存在"
 // @Failure 422 {object} response.Response "验证失败"
-// @Router /categories/{id} [put]func (ctrl *CategoriesController) Update(c *gin.Context) {
+// @Router /categories/{id} [put]
+func (ctrl *CategoriesController) Update(c *gin.Context) {
     // 表单验证
     request := requests.CategoryRequest{}
     if ok := requests.Validate(c, &request, requests.CategorySave); !ok {
