@@ -96,9 +96,10 @@ func (s *RoleService) GetAllRoles() ([]RoleResponseDTO, error) {
 		return nil, fmt.Errorf("获取角色列表失败: %v", err)
 	}
 
+	// 优化：使用索引访问避免结构体拷贝
 	responses := make([]RoleResponseDTO, len(roles))
-	for i, r := range roles {
-		responses[i] = toRoleResponseDTO(&r)
+	for i := range roles {
+		responses[i] = toRoleResponseDTO(&roles[i])
 	}
 
 	return responses, nil
@@ -111,9 +112,10 @@ func (s *RoleService) GetRolesPaginated(page, perPage int) ([]RoleResponseDTO, i
 		return nil, 0, fmt.Errorf("获取角色列表失败: %v", err)
 	}
 
+	// 优化：使用索引访问避免结构体拷贝
 	responses := make([]RoleResponseDTO, len(roles))
-	for i, r := range roles {
-		responses[i] = toRoleResponseDTO(&r)
+	for i := range roles {
+		responses[i] = toRoleResponseDTO(&roles[i])
 	}
 
 	return responses, count, nil

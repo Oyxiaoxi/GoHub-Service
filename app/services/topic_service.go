@@ -83,20 +83,21 @@ func (s *TopicService) toResponseDTO(t *topic.Topic) *TopicResponseDTO {
 }
 
 // toResponseDTOList 将Topic模型列表转换为响应DTO列表
+// 优化：使用索引访问避免结构体拷贝
 func (s *TopicService) toResponseDTOList(topics []topic.Topic) []TopicResponseDTO {
 	dtos := make([]TopicResponseDTO, len(topics))
-	for i, t := range topics {
+	for i := range topics {
 		dtos[i] = TopicResponseDTO{
-			ID:         t.GetStringID(),
-			Title:      t.Title,
-			Body:       t.Body,
-			CategoryID: t.CategoryID,
-			UserID:     t.UserID,
-			LikeCount:     t.LikeCount,
-			FavoriteCount: t.FavoriteCount,
-			ViewCount:     t.ViewCount,
-			CreatedAt:  t.CreatedAt,
-			UpdatedAt:  t.UpdatedAt,
+			ID:            topics[i].GetStringID(),
+			Title:         topics[i].Title,
+			Body:          topics[i].Body,
+			CategoryID:    topics[i].CategoryID,
+			UserID:        topics[i].UserID,
+			LikeCount:     topics[i].LikeCount,
+			FavoriteCount: topics[i].FavoriteCount,
+			ViewCount:     topics[i].ViewCount,
+			CreatedAt:     topics[i].CreatedAt,
+			UpdatedAt:     topics[i].UpdatedAt,
 		}
 	}
 	return dtos

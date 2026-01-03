@@ -1,6 +1,6 @@
 # 📚 GoHub-Service 文档中心
 
-**版本**: v2.4 | **更新**: 2026年1月3日 | **文档数**: 17 个 | **零冗余** ✅
+**版本**: v2.5 | **更新**: 2026年1月3日 | **文档数**: 18 个 | **零冗余** ✅
 
 ## 🚀 按角色快速导航
 
@@ -78,6 +78,11 @@
 | 搜索功能配置 | [10_ELASTICSEARCH.md](10_ELASTICSEARCH.md) |
 | 监控和告警 | [11_MONITORING.md](11_MONITORING.md) |
 | 问题和解决 | [12_FAQ.md](12_FAQ.md) |
+| 数据库优化 | [13_DATABASE_OPTIMIZATION.md](13_DATABASE_OPTIMIZATION.md) |
+| 缓存策略 | [14_CACHE_STRATEGY.md](14_CACHE_STRATEGY.md) |
+| 错误处理 | [15_ERROR_HANDLING.md](15_ERROR_HANDLING.md) |
+| 并发安全 | [16_CONCURRENCY_SAFETY.md](16_CONCURRENCY_SAFETY.md) |
+| 内存优化 🆕 | [17_MEMORY_OPTIMIZATION.md](17_MEMORY_OPTIMIZATION.md) |
 
 ## ✨ 文档特性
 

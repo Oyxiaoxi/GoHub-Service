@@ -41,15 +41,16 @@ func (s *LinkService) toResponseDTO(l *link.Link) *LinkResponseDTO {
 }
 
 // toResponseDTOList 将Link模型列表转换为响应DTO列表
+// 优化：使用索引访问避免结构体拷贝
 func (s *LinkService) toResponseDTOList(links []link.Link) []LinkResponseDTO {
 	dtos := make([]LinkResponseDTO, len(links))
-	for i, l := range links {
+	for i := range links {
 		dtos[i] = LinkResponseDTO{
-			ID:        l.GetStringID(),
-			Name:      l.Name,
-			URL:       l.URL,
-			CreatedAt: l.CreatedAt,
-			UpdatedAt: l.UpdatedAt,
+			ID:        links[i].GetStringID(),
+			Name:      links[i].Name,
+			URL:       links[i].URL,
+			CreatedAt: links[i].CreatedAt,
+			UpdatedAt: links[i].UpdatedAt,
 		}
 	}
 	return dtos

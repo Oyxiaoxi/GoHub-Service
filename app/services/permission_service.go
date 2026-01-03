@@ -114,9 +114,10 @@ func (s *PermissionService) GetPermissionsPaginated(page, perPage int) ([]Permis
 		return nil, 0, fmt.Errorf("获取权限列表失败: %v", err)
 	}
 
+	// 优化：使用索引访问避免结构体拷贝
 	responses := make([]PermissionResponseDTO, len(perms))
-	for i, p := range perms {
-		responses[i] = toPermissionResponseDTO(&p)
+	for i := range perms {
+		responses[i] = toPermissionResponseDTO(&perms[i])
 	}
 
 	return responses, count, nil
@@ -129,9 +130,10 @@ func (s *PermissionService) GetPermissionsByGroup(group string) ([]PermissionRes
 		return nil, fmt.Errorf("获取权限列表失败: %v", err)
 	}
 
+	// 优化：使用索引访问避免结构体拷贝
 	responses := make([]PermissionResponseDTO, len(perms))
-	for i, p := range perms {
-		responses[i] = toPermissionResponseDTO(&p)
+	for i := range perms {
+		responses[i] = toPermissionResponseDTO(&perms[i])
 	}
 
 	return responses, nil

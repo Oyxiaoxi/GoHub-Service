@@ -62,15 +62,16 @@ func (s *CategoryService) toResponseDTO(c *category.Category) *CategoryResponseD
 }
 
 // toResponseDTOList 将Category模型列表转换为响应DTO列表
+// 优化：使用索引访问避免结构体拷贝
 func (s *CategoryService) toResponseDTOList(categories []category.Category) []CategoryResponseDTO {
 	dtos := make([]CategoryResponseDTO, len(categories))
-	for i, c := range categories {
+	for i := range categories {
 		dtos[i] = CategoryResponseDTO{
-			ID:          c.GetStringID(),
-			Name:        c.Name,
-			Description: c.Description,
-			CreatedAt:   c.CreatedAt,
-			UpdatedAt:   c.UpdatedAt,
+			ID:          categories[i].GetStringID(),
+			Name:        categories[i].Name,
+			Description: categories[i].Description,
+			CreatedAt:   categories[i].CreatedAt,
+			UpdatedAt:   categories[i].UpdatedAt,
 		}
 	}
 	return dtos

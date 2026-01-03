@@ -81,16 +81,17 @@ func (s *UserService) toResponseDTO(u *user.User) *UserResponseDTO {
 }
 
 // toResponseDTOList 将User模型列表转换为响应DTO列表
+// 优化：使用索引访问避免结构体拷贝
 func (s *UserService) toResponseDTOList(users []user.User) []UserResponseDTO {
 	dtos := make([]UserResponseDTO, len(users))
-	for i, u := range users {
+	for i := range users {
 		dtos[i] = UserResponseDTO{
-			ID:        u.GetStringID(),
-			Name:      u.Name,
-			Email:     u.Email,
-			Phone:     u.Phone,
-			CreatedAt: u.CreatedAt,
-			UpdatedAt: u.UpdatedAt,
+			ID:        users[i].GetStringID(),
+			Name:      users[i].Name,
+			Email:     users[i].Email,
+			Phone:     users[i].Phone,
+			CreatedAt: users[i].CreatedAt,
+			UpdatedAt: users[i].UpdatedAt,
 		}
 	}
 	return dtos

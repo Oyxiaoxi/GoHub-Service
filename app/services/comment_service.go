@@ -81,18 +81,19 @@ func (s *CommentService) toResponseDTO(c *comment.Comment) *CommentResponseDTO {
 }
 
 // toResponseDTOList 将Comment模型列表转换为响应DTO列表
+// 优化：使用索引访问避免结构体拷贝
 func (s *CommentService) toResponseDTOList(comments []comment.Comment) []CommentResponseDTO {
 	dtos := make([]CommentResponseDTO, len(comments))
-	for i, c := range comments {
+	for i := range comments {
 		dtos[i] = CommentResponseDTO{
-			ID:        c.GetStringID(),
-			TopicID:   c.TopicID,
-			UserID:    c.UserID,
-			Content:   c.Content,
-			ParentID:  c.ParentID,
-			LikeCount: c.LikeCount,
-			CreatedAt: c.CreatedAt,
-			UpdatedAt: c.UpdatedAt,
+			ID:        comments[i].GetStringID(),
+			TopicID:   comments[i].TopicID,
+			UserID:    comments[i].UserID,
+			Content:   comments[i].Content,
+			ParentID:  comments[i].ParentID,
+			LikeCount: comments[i].LikeCount,
+			CreatedAt: comments[i].CreatedAt,
+			UpdatedAt: comments[i].UpdatedAt,
 		}
 	}
 	return dtos
