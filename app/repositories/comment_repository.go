@@ -20,6 +20,8 @@ type CommentRepository interface {
 	Create(comment *comment.Comment) error
 	Update(comment *comment.Comment) error
 	Delete(id string) error
+	BatchCreate(comments []comment.Comment) error
+	BatchDelete(ids []string) error
 	IncrementLikeCount(id string) error
 	DecrementLikeCount(id string) error
 	CountByTopicID(topicID string) (int64, error)
@@ -36,7 +38,15 @@ func NewCommentRepository() CommentRepository {
 // GetByID 根据ID获取评论
 func (r *commentRepository) GetByID(id string) (*comment.Comment, error) {
 	var commentModel comment.Comment
-	if err := database.DB.Preload("User").Preload("Topic").First(&commentModel, id).Error; err != nil {
+	if err := database.DB.
+		Select("id", "topic_id", "user_id", "content", "parent_id", "like_count", "created_at", "updated_at").
+		Preload("User", func(db *gorm.DB) *gorm.DB {
+			return db.Select("id", "name", "email", "avatar")
+		}).
+		Preload("Topic", func(db *gorm.DB) *gorm.DB {
+			return db.Select("id", "title", "user_id", "category_id")
+		}).
+		First(&commentModel, id).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, nil
 		}
@@ -49,8 +59,13 @@ func (r *commentRepository) GetByID(id string) (*comment.Comment, error) {
 func (r *commentRepository) List(c *gin.Context, perPage int) ([]comment.Comment, *paginator.Paging, error) {
 	var comments []comment.Comment
 	query := database.DB.Model(&comment.Comment{}).
-		Preload("User").
-		Preload("Topic").
+		Select("id", "topic_id", "user_id", "content", "parent_id", "like_count", "created_at", "updated_at").
+		Preload("User", func(db *gorm.DB) *gorm.DB {
+			return db.Select("id", "name", "email", "avatar")
+		}).
+		Preload("Topic", func(db *gorm.DB) *gorm.DB {
+			return db.Select("id", "title", "user_id", "category_id")
+		}).
 		Order("created_at DESC")
 
 	paging := paginator.Paginate(
@@ -68,8 +83,11 @@ func (r *commentRepository) List(c *gin.Context, perPage int) ([]comment.Comment
 func (r *commentRepository) ListByTopicID(c *gin.Context, topicID string, perPage int) ([]comment.Comment, *paginator.Paging, error) {
 	var comments []comment.Comment
 	query := database.DB.Model(&comment.Comment{}).
+		Select("id", "topic_id", "user_id", "content", "parent_id", "like_count", "created_at", "updated_at").
 		Where("topic_id = ? AND parent_id = ?", topicID, "0").
-		Preload("User").
+		Preload("User", func(db *gorm.DB) *gorm.DB {
+			return db.Select("id", "name", "email", "avatar")
+		}).
 		Order("created_at DESC")
 
 	paging := paginator.Paginate(
@@ -87,9 +105,14 @@ func (r *commentRepository) ListByTopicID(c *gin.Context, topicID string, perPag
 func (r *commentRepository) ListByUserID(c *gin.Context, userID string, perPage int) ([]comment.Comment, *paginator.Paging, error) {
 	var comments []comment.Comment
 	query := database.DB.Model(&comment.Comment{}).
+		Select("id", "topic_id", "user_id", "content", "parent_id", "like_count", "created_at", "updated_at").
 		Where("user_id = ?", userID).
-		Preload("User").
-		Preload("Topic").
+		Preload("User", func(db *gorm.DB) *gorm.DB {
+			return db.Select("id", "name", "email", "avatar")
+		}).
+		Preload("Topic", func(db *gorm.DB) *gorm.DB {
+			return db.Select("id", "title", "user_id", "category_id")
+		}).
 		Order("created_at DESC")
 
 	paging := paginator.Paginate(
@@ -107,8 +130,11 @@ func (r *commentRepository) ListByUserID(c *gin.Context, userID string, perPage 
 func (r *commentRepository) ListReplies(c *gin.Context, parentID string, perPage int) ([]comment.Comment, *paginator.Paging, error) {
 	var comments []comment.Comment
 	query := database.DB.Model(&comment.Comment{}).
+		Select("id", "topic_id", "user_id", "content", "parent_id", "like_count", "created_at", "updated_at").
 		Where("parent_id = ?", parentID).
-		Preload("User").
+		Preload("User", func(db *gorm.DB) *gorm.DB {
+			return db.Select("id", "name", "email", "avatar")
+		}).
 		Order("created_at ASC")
 
 	paging := paginator.Paginate(
@@ -176,4 +202,33 @@ func (r *commentRepository) CountByTopicID(topicID string) (int64, error) {
 	var count int64
 	err := database.DB.Model(&comment.Comment{}).Where("topic_id = ?", topicID).Count(&count).Error
 	return count, err
+}
+
+// BatchCreate 批量创建评论（使用事务和批量插入优化）
+func (r *commentRepository) BatchCreate(comments []comment.Comment) error {
+	if len(comments) == 0 {
+		return nil
+	}
+
+	return database.DB.Transaction(func(tx *gorm.DB) error {
+		// 使用 CreateInBatches 批量插入，每批100条
+		if err := tx.CreateInBatches(&comments, 100).Error; err != nil {
+			return err
+		}
+		return nil
+	})
+}
+
+// BatchDelete 批量删除评论（使用事务）
+func (r *commentRepository) BatchDelete(ids []string) error {
+	if len(ids) == 0 {
+		return nil
+	}
+
+	return database.DB.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Where("id IN ?", ids).Delete(&comment.Comment{}).Error; err != nil {
+			return err
+		}
+		return nil
+	})
 }

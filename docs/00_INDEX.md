@@ -1,13 +1,13 @@
 # 📚 GoHub-Service 文档中心
 
-**版本**: v2.0 | **更新**: 2026年1月1日 | **文档数**: 13 个 | **零冗余** ✅
+**版本**: v2.1 | **更新**: 2026年1月3日 | **文档数**: 14 个 | **零冗余** ✅
 
 ## 🚀 按角色快速导航
 
 | 角色 | 推荐阅读路径 |
 |------|------------|
 | 🆕 **新开发者** | [01_QUICKSTART](01_QUICKSTART.md) → [02_ARCHITECTURE](02_ARCHITECTURE.md) → [05_DEVELOPMENT](05_DEVELOPMENT.md) |
-| 💻 **后端开发** | [08_API_REFERENCE](08_API_REFERENCE.md) → [06_SECURITY](06_SECURITY.md) → [07_PERFORMANCE](07_PERFORMANCE.md) |
+| 💻 **后端开发** | [08_API_REFERENCE](08_API_REFERENCE.md) → [13_DATABASE_OPTIMIZATION](13_DATABASE_OPTIMIZATION.md) → [07_PERFORMANCE](07_PERFORMANCE.md) |
 | 🔐 **安全审计** | [06_SECURITY](06_SECURITY.md) → [03_RBAC](03_RBAC.md) → [12_FAQ](12_FAQ.md) |
 | 🚀 **运维工程师** | [09_PRODUCTION](09_PRODUCTION.md) → [10_ELASTICSEARCH](10_ELASTICSEARCH.md) → [11_MONITORING](11_MONITORING.md) |
 | 👨‍💼 **项目经理** | [02_ARCHITECTURE](02_ARCHITECTURE.md) → [07_PERFORMANCE](07_PERFORMANCE.md) |
@@ -31,6 +31,7 @@
 - **[10_ELASTICSEARCH.md](10_ELASTICSEARCH.md)** - 搜索集成，数据同步
 - **[11_MONITORING.md](11_MONITORING.md)** - 监控告警，Prometheus
 - **[12_FAQ.md](12_FAQ.md)** - 常见问题，故障排查
+- **[13_DATABASE_OPTIMIZATION.md](13_DATABASE_OPTIMIZATION.md)** - 数据库查询优化，批量操作 ⭐️
 
 ## 🎓 推荐学习路径
 
