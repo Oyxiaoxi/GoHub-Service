@@ -33,7 +33,8 @@ func NewCategoriesController() *CategoriesController {
 // @Param category body requests.CategoryRequest true "分类信息"
 // @Success 201 {object} response.Response "成功"
 // @Failure 422 {object} response.Response "验证失败"
-// @Router /categories [post]func (ctrl *CategoriesController) Store(c *gin.Context) {
+// @Router /categories [post]
+func (ctrl *CategoriesController) Store(c *gin.Context) {
     request := requests.CategoryRequest{}
     if ok := requests.Validate(c, &request, requests.CategorySave); !ok {
         return
