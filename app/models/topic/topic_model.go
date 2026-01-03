@@ -28,6 +28,10 @@ type Topic struct {
 	PinnedAt *time.Time `gorm:"comment:置顶时间" json:"pinned_at,omitempty"`
 	PinnedBy uint64     `gorm:"comment:置顶操作员ID" json:"pinned_by,omitempty"`
 
+	// 审核相关字段
+	Status       int    `gorm:"type:int;default:1;index;comment:状态:0待审核,1已通过,-1已拒绝" json:"status,omitempty"`
+	RejectReason string `gorm:"type:varchar(500);comment:拒绝原因" json:"reject_reason,omitempty"`
+
 	// 通过 user_id 关联用户
 	User user.User `json:"user"`
 

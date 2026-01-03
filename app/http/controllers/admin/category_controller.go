@@ -148,6 +148,38 @@ func (ctrl *CategoryController) Delete(c *gin.Context) {
 	})
 }
 
+// Sort 分类排序
+func (ctrl *CategoryController) Sort(c *gin.Context) {
+	type SortItem struct {
+		ID    uint `json:"id" binding:"required"`
+		Order int  `json:"order" binding:"required"`
+	}
+	
+	type SortRequest struct {
+		Items []SortItem `json:"items" binding:"required"`
+	}
+
+	var req SortRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.BadRequest(c, err, "参数错误")
+		return
+	}
+
+	// 批量更新排序
+	for _, item := range req.Items {
+		if err := database.DB.Model(&category.Category{}).
+			Where("id = ?", item.ID).
+			Update("sort_order", item.Order).Error; err != nil {
+			response.Abort500(c, "排序失败")
+			return
+		}
+	}
+
+	response.Data(c, gin.H{
+		"message": "排序成功",
+		"count":   len(req.Items),
+	})
+}
 // Sort 分类排序（暂不支持，因为 Category 模型没有 order 字段）
 func (ctrl *CategoryController) Sort(c *gin.Context) {
 	// 注意：Category 模型暂无 order 字段，此功能暂不可用

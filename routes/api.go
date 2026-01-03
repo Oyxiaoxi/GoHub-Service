@@ -2,6 +2,7 @@
 package routes
 
 import (
+	"GoHub-Service/app/http/controllers/api"
 	"GoHub-Service/app/http/controllers/api/v1/auth"
 	"GoHub-Service/app/http/middlewares"
 	"GoHub-Service/pkg/apiversion"
@@ -17,6 +18,12 @@ import (
 
 // RegisterAPIRoutes 注册 API 相关路由
 func RegisterAPIRoutes(r *gin.Engine) {
+	// 健康检查端点（无需认证）
+	healthCtrl := new(api.HealthController)
+	r.GET("/health", healthCtrl.Health)
+	r.GET("/readiness", healthCtrl.Readiness)
+	r.GET("/liveness", healthCtrl.Liveness)
+
 	// Prometheus 指标端点
 	r.GET("/metrics", metrics.Handler())
 

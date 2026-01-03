@@ -260,7 +260,8 @@ func (ctrl *TopicController) Approve(c *gin.Context) {
 	}
 
 	// 审核通过状态设置为 1
-	// t.Status = 1
+	t.Status = 1
+	t.RejectReason = ""
 
 	if err := database.DB.Save(&t).Error; err != nil {
 		response.Abort500(c, "审核失败")
@@ -269,6 +270,8 @@ func (ctrl *TopicController) Approve(c *gin.Context) {
 
 	response.Data(c, gin.H{
 		"message": "审核通过",
+		"topic_id": topicID,
+		"status": t.Status,
 	})
 }
 
@@ -293,7 +296,8 @@ func (ctrl *TopicController) Reject(c *gin.Context) {
 	}
 
 	// 审核拒绝状态设置为 -1
-	// t.Status = -1
+	t.Status = -1
+	t.RejectReason = req.Reason
 
 	if err := database.DB.Save(&t).Error; err != nil {
 		response.Abort500(c, "审核失败")
@@ -302,6 +306,8 @@ func (ctrl *TopicController) Reject(c *gin.Context) {
 
 	response.Data(c, gin.H{
 		"message": "已拒绝",
+		"topic_id": topicID,
+		"status": t.Status,
 		"reason":  req.Reason,
 	})
 }

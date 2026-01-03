@@ -11,6 +11,7 @@ type Category struct {
 
     Name        string `gorm:"index" json:"name,omitempty"`
     Description string `json:"description,omitempty"`
+    SortOrder   int    `gorm:"type:int;default:0;index;comment:排序顺序" json:"sort_order,omitempty"`
 
     models.CommonTimestampsField
 }
