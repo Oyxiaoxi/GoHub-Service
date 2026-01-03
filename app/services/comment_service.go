@@ -4,14 +4,15 @@ package services
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"GoHub-Service/app/cache"
 	"GoHub-Service/app/models/comment"
 	"GoHub-Service/app/repositories"
 	apperrors "GoHub-Service/pkg/errors"
+	"GoHub-Service/pkg/mapper"
 	"GoHub-Service/pkg/paginator"
 	"GoHub-Service/pkg/singleflight"
-	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -22,16 +23,32 @@ type CommentService struct {
 	cache     *cache.CommentCache
 	notifSvc  *NotificationService
 	topicRepo repositories.TopicRepository
-	sfGroup   singleflight.Group // singleflight 防止缓存击穿
+	sfGroup   singleflight.Group                               // singleflight 防止缓存击穿
+	mapper    mapper.Mapper[comment.Comment, CommentResponseDTO] // 使用泛型Mapper消除DTO转换重复
 }
 
 // NewCommentService 创建评论服务实例
 func NewCommentService() *CommentService {
+	// 定义DTO转换函数（只需一次）
+	converter := func(c *comment.Comment) *CommentResponseDTO {
+		return &CommentResponseDTO{
+			ID:        c.GetStringID(),
+			TopicID:   c.TopicID,
+			UserID:    c.UserID,
+			Content:   c.Content,
+			ParentID:  c.ParentID,
+			LikeCount: c.LikeCount,
+			CreatedAt: c.CreatedAt,
+			UpdatedAt: c.UpdatedAt,
+		}
+	}
+
 	return &CommentService{
 		repo:      repositories.NewCommentRepository(),
 		cache:     cache.NewCommentCache(),
 		notifSvc:  NewNotificationService(),
 		topicRepo: repositories.NewTopicRepository(),
+		mapper:    mapper.NewSimpleMapper(converter),
 	}
 }
 
@@ -66,37 +83,16 @@ type CommentListResponseDTO struct {
 	Paging   *paginator.Paging    `json:"paging"`
 }
 
-// toResponseDTO 将Comment模型转换为响应DTO
+// toResponseDTO 使用Mapper将Comment模型转换为响应DTO
+// 优化：使用泛型Mapper消除重复代码
 func (s *CommentService) toResponseDTO(c *comment.Comment) *CommentResponseDTO {
-	return &CommentResponseDTO{
-		ID:        c.GetStringID(),
-		TopicID:   c.TopicID,
-		UserID:    c.UserID,
-		Content:   c.Content,
-		ParentID:  c.ParentID,
-		LikeCount: c.LikeCount,
-		CreatedAt: c.CreatedAt,
-		UpdatedAt: c.UpdatedAt,
-	}
+	return s.mapper.ToDTO(c)
 }
 
-// toResponseDTOList 将Comment模型列表转换为响应DTO列表
-// 优化：使用索引访问避免结构体拷贝
+// toResponseDTOList 使用Mapper将Comment模型列表转换为响应DTO列表
+// 优化：使用泛型Mapper消除重复代码，自动优化内存拷贝
 func (s *CommentService) toResponseDTOList(comments []comment.Comment) []CommentResponseDTO {
-	dtos := make([]CommentResponseDTO, len(comments))
-	for i := range comments {
-		dtos[i] = CommentResponseDTO{
-			ID:        comments[i].GetStringID(),
-			TopicID:   comments[i].TopicID,
-			UserID:    comments[i].UserID,
-			Content:   comments[i].Content,
-			ParentID:  comments[i].ParentID,
-			LikeCount: comments[i].LikeCount,
-			CreatedAt: comments[i].CreatedAt,
-			UpdatedAt: comments[i].UpdatedAt,
-		}
-	}
-	return dtos
+	return s.mapper.ToDTOList(comments)
 }
 
 // GetByID 根据ID获取评论（使用 singleflight 防止缓存击穿）

@@ -4,14 +4,15 @@ package services
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"GoHub-Service/app/cache"
 	"GoHub-Service/app/models/topic"
 	"GoHub-Service/app/repositories"
 	apperrors "GoHub-Service/pkg/errors"
+	"GoHub-Service/pkg/mapper"
 	"GoHub-Service/pkg/paginator"
 	"GoHub-Service/pkg/singleflight"
-	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -20,14 +21,32 @@ import (
 type TopicService struct {
 	repo    repositories.TopicRepository
 	cache   *cache.TopicCache
-	sfGroup singleflight.Group // singleflight 防止缓存击穿
+	sfGroup singleflight.Group                           // singleflight 防止缓存击穿
+	mapper  mapper.Mapper[topic.Topic, TopicResponseDTO] // 使用泛型Mapper消除DTO转换重复
 }
 
 // NewTopicService 创建Topic服务实例
 func NewTopicService() *TopicService {
+	// 定义DTO转换函数（只需一次）
+	converter := func(t *topic.Topic) *TopicResponseDTO {
+		return &TopicResponseDTO{
+			ID:            t.GetStringID(),
+			Title:         t.Title,
+			Body:          t.Body,
+			CategoryID:    t.CategoryID,
+			UserID:        t.UserID,
+			LikeCount:     t.LikeCount,
+			FavoriteCount: t.FavoriteCount,
+			ViewCount:     t.ViewCount,
+			CreatedAt:     t.CreatedAt,
+			UpdatedAt:     t.UpdatedAt,
+		}
+	}
+
 	return &TopicService{
-		repo:  repositories.NewTopicRepository(),
-		cache: cache.NewTopicCache(),
+		repo:   repositories.NewTopicRepository(),
+		cache:  cache.NewTopicCache(),
+		mapper: mapper.NewSimpleMapper(converter),
 	}
 }
 
@@ -66,38 +85,17 @@ type TopicListResponseDTO struct {
 	Paging *paginator.Paging  `json:"paging"`
 }
 
-// toResponseDTO 将Topic模型转换为响应DTO
+// toResponseDTO 使用Mapper将Topic模型转换为响应DTO
+// 优化：使用泛型Mapper消除重复代码
 func (s *TopicService) toResponseDTO(t *topic.Topic) *TopicResponseDTO {
-	return &TopicResponseDTO{
-		ID:         t.GetStringID(),
-		Title:      t.Title,
-		Body:       t.Body,
-		CategoryID: t.CategoryID,
-		UserID:     t.UserID,
-		LikeCount:     t.LikeCount,
-		FavoriteCount: t.FavoriteCount,
-		ViewCount:     t.ViewCount,
-		CreatedAt:  t.CreatedAt,
-		UpdatedAt:  t.UpdatedAt,
-	}
+	return s.mapper.ToDTO(t)
 }
 
-// toResponseDTOList 将Topic模型列表转换为响应DTO列表
-// 优化：使用索引访问避免结构体拷贝
+// toResponseDTOList 使用Mapper将Topic模型列表转换为响应DTO列表
+// 优化：使用泛型Mapper消除重复代码，自动优化内存拷贝
 func (s *TopicService) toResponseDTOList(topics []topic.Topic) []TopicResponseDTO {
-	dtos := make([]TopicResponseDTO, len(topics))
-	for i := range topics {
-		dtos[i] = TopicResponseDTO{
-			ID:            topics[i].GetStringID(),
-			Title:         topics[i].Title,
-			Body:          topics[i].Body,
-			CategoryID:    topics[i].CategoryID,
-			UserID:        topics[i].UserID,
-			LikeCount:     topics[i].LikeCount,
-			FavoriteCount: topics[i].FavoriteCount,
-			ViewCount:     topics[i].ViewCount,
-			CreatedAt:     topics[i].CreatedAt,
-			UpdatedAt:     topics[i].UpdatedAt,
+	return s.mapper.ToDTOList(topics)
+}
 		}
 	}
 	return dtos
